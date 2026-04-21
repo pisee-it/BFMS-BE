@@ -37,3 +37,7 @@ application:
       # Time gian sống của Refresh Token (7 ngày)
       refresh-token:
         expiration: 604800000
+
+bfms:
+  pricing:
+    monthly-ticket: 240000 #Vé tháng

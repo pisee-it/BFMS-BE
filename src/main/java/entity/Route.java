@@ -61,7 +61,7 @@ public class Route {
     private LocalTime operationEnd;
 
     @Column(name = "price")
-    private BigDecimal price;
+    private BigDecimal price; // Vé lượt
 
     @OneToMany(mappedBy = "route", fetch = FetchType.LAZY)
     private List<Bus> buses = new ArrayList<>();
