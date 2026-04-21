@@ -2,7 +2,8 @@
 spring:
   application:
     name: bfms-backend
-    # 1. Cấu hình kết nối tới Supabase (PostgreSQL)
+
+  # 1. Cấu hình kết nối tới Supabase (PostgreSQL)
   datasource:
     url: jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres
     username: postgres.beposyakzytatojdkuvm
@@ -25,3 +26,14 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+application:
+  security:
+    jwt:
+      # Sử dụng openssl rand -hex 64 để generate secret key
+      secret-key: "2d9aa4217d5c71b939919b4daf4c9a46e4ec97646a2618a41538860c25cc81369ab2e18ca84881854f1ffca87dfb97dc5fa42e7215def65dc9152b8ac47a3c64"
+      # Time sống của Token (1 ngày = 86400000 ms)
+      expiration: 86400000
+      # Time gian sống của Refresh Token (7 ngày)
+      refresh-token:
+        expiration: 604800000
