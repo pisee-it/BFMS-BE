@@ -17,27 +17,28 @@ public class Bus {
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "route_id")
+    @JoinColumn(name = "route_id", nullable = false)
     private Route route;
 
-    @Column(name = "bus_model")
+    @Column(name = "bus_model", nullable = false)
     private String busModel;
 
-    @Column(name = "manufacturer")
+    @Column(name = "manufacturer", nullable = false)
     private String manufacturer;
 
-    @Column(name = "capacity")
+    @Column(name = "capacity", nullable = false)
     private Integer capacity;
 
-    @Column(name = "yom")
+    @Column(name = "yom", nullable = false)
     private Integer yom;
 
     @Column(name = "license_plate")
     private String licensePlate;
 
-    @Column(name = "status")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private BusStatus status;
 
-    @Column(name = "is_advertised")
+    @Column(name = "is_advertised", nullable = false)
     private Boolean isAdvertised;
 }

@@ -36,23 +36,23 @@ public class Route {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "route_number")
+    @Column(name = "route_number", nullable = false)
     private String routeNumber;
 
-    @Column(name = "stop_a")
+    @Column(name = "stop_a", nullable = false)
     private String stopA;
 
-    @Column(name = "stop_b")
+    @Column(name = "stop_b", nullable = false)
     private String stopB;
 
-    @Column(name = "path")
+    @Column(name = "path", nullable = false)
     private String path;
 
     @Column(name = "distance_ab")
-    private BigDecimal distanceAb;
+    private BigDecimal distanceAB;
 
     @Column(name = "distance_ba")
-    private BigDecimal distanceBa;
+    private BigDecimal distanceBA;
 
     @Column(name = "operation_start")
     private LocalTime operationStart;
