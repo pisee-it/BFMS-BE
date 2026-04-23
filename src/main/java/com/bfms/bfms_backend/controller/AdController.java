@@ -1,0 +1,88 @@
+package com.bfms.bfms_backend.controller;
+
+import com.bfms.bfms_backend.dtos.req.AdAssignmentRequest;
+import com.bfms.bfms_backend.dtos.req.AdCompanyRequest;
+import com.bfms.bfms_backend.dtos.req.AdContractRequest;
+import com.bfms.bfms_backend.dtos.res.AdAssignmentResponse;
+import com.bfms.bfms_backend.dtos.res.AdCompanyResponse;
+import com.bfms.bfms_backend.dtos.res.AdContractResponse;
+import com.bfms.bfms_backend.service.impl.AdServiceImpl;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * Controller quản lý Module Quảng cáo.
+ * Phân quyền dựa trên vai trò được định nghĩa trong PROJECT_CONTEXT.md.
+ */
+@RestController
+@RequestMapping("/api/v1/ads")
+public class AdController {
+
+    private final AdServiceImpl adService;
+
+    public AdController(AdServiceImpl adService) {
+        this.adService = adService;
+    }
+
+    // --- Quản lý Công ty Quảng cáo ---
+
+    @PostMapping("/companies")
+    @PreAuthorize("hasAnyRole('ADVERTISING', 'ADMIN')")
+    public ResponseEntity<AdCompanyResponse> createCompany(@RequestBody AdCompanyRequest request) {
+        return ResponseEntity.ok(adService.createCompany(request));
+    }
+
+    @GetMapping("/companies")
+    @PreAuthorize("hasAnyRole('ADVERTISING', 'ADMIN', 'ACCOUNTANT')")
+    public ResponseEntity<List<AdCompanyResponse>> getAllCompanies() {
+        return ResponseEntity.ok(adService.getAllCompanies());
+    }
+
+    // --- Quản lý Hợp đồng Quảng cáo ---
+
+    // US-04: Tạo yêu cầu hợp đồng
+    @PostMapping("/contracts")
+    @PreAuthorize("hasRole('ADVERTISING')")
+    public ResponseEntity<AdContractResponse> createContract(@RequestBody AdContractRequest request) {
+        return ResponseEntity.ok(adService.createContract(request));
+    }
+
+    @GetMapping("/contracts")
+    @PreAuthorize("hasAnyRole('ADVERTISING', 'ADMIN', 'ACCOUNTANT', 'OWNER')")
+    public ResponseEntity<List<AdContractResponse>> getAllContracts() {
+        return ResponseEntity.ok(adService.getAllContracts());
+    }
+
+    // US-06: Phê duyệt hợp đồng
+    @PatchMapping("/contracts/{id}/approve")
+    @PreAuthorize("hasRole('ACCOUNTANT')")
+    public ResponseEntity<AdContractResponse> approveContract(@PathVariable Integer id) {
+        return ResponseEntity.ok(adService.approveContract(id));
+    }
+
+    // Yêu cầu xóa hợp đồng (Accountant yêu cầu, Owner thực thi)
+    @PatchMapping("/contracts/{id}/request-delete")
+    @PreAuthorize("hasRole('ACCOUNTANT')")
+    public ResponseEntity<AdContractResponse> requestDeleteContract(@PathVariable Integer id) {
+        return ResponseEntity.ok(adService.requestDeleteContract(id));
+    }
+
+    @DeleteMapping("/contracts/{id}")
+    @PreAuthorize("hasRole('OWNER')")
+    public ResponseEntity<Void> deleteContract(@PathVariable Integer id) {
+        adService.deleteContract(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // --- Gán Quảng cáo lên Xe ---
+
+    // US-05: Phân bổ quảng cáo lên xe
+    @PostMapping("/assignments")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AdAssignmentResponse> assignAdToBus(@RequestBody AdAssignmentRequest request) {
+        return ResponseEntity.ok(adService.assignAdToBus(request));
+    }
+}

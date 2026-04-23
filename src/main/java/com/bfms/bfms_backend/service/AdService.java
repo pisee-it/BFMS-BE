@@ -11,14 +11,18 @@ import java.util.List;
 
 public interface AdService {
     AdCompanyResponse createCompany(AdCompanyRequest request);
+
     AdContractResponse createContract(AdContractRequest request);
+
     AdContractResponse approveContract(Integer contractId);
+
     AdAssignmentResponse assignAdToBus(AdAssignmentRequest request);
-    
-    // Deletion logic requested by user
+
     AdContractResponse requestDeleteContract(Integer contractId);
+
     void deleteContract(Integer contractId);
-    
+
     List<AdCompanyResponse> getAllCompanies();
+
     List<AdContractResponse> getAllContracts();
 }
