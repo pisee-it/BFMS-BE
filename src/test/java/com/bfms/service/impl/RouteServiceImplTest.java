@@ -1,15 +1,16 @@
 package com.bfms.service.impl;
 
-import dtos.req.RouteRequest;
-import dtos.res.RouteResponse;
-import entity.Route;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import repository.RouteRepository;
-import service.impl.RouteServiceImpl;
+
+import com.bfms.bfms_backend.dtos.req.RouteRequest;
+import com.bfms.bfms_backend.dtos.res.RouteResponse;
+import com.bfms.bfms_backend.entity.Route;
+import com.bfms.bfms_backend.repository.RouteRepository;
+import com.bfms.bfms_backend.service.impl.RouteServiceImpl;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
@@ -28,7 +29,8 @@ class RouteServiceImplTest {
     private RouteServiceImpl routeService;
 
     // --- 1. TEST VALIDATION ---
-    // Các test case này sẽ dừng lại ngay khi gặp lỗi nên không được khai báo stubbing save() chung
+    // Các test case này sẽ dừng lại ngay khi gặp lỗi nên không được khai báo
+    // stubbing save() chung
 
     @Test
     void createRoute_ShouldThrowException_WhenDistanceABIsNegative() {
@@ -107,7 +109,6 @@ class RouteServiceImplTest {
         return new RouteRequest(
                 "T01", "Stop A", "Stop B", "Path Description",
                 distAB, distBA, LocalTime.of(5, 0), LocalTime.of(22, 0),
-                null
-        );
+                null);
     }
 }

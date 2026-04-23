@@ -55,7 +55,6 @@ CREATE TABLE NODE (
     route_id         INT  REFERENCES ROUTE(id),
     node_number      INT,
     execution_date   DATE  NOT NULL,
-    direction        SMALLINT CHECK (direction IN (1, 2)),      -- 1: A→B, 2: B→A
     description      TEXT,
     -- [DOC-1] Derived field: được tính = SUM(BUS_SHIFT.total_single_tickets + total_monthly_tickets)
     --         Không ghi trực tiếp; Service layer cập nhật sau khi hoàn thành ca chạy
@@ -114,6 +113,7 @@ CREATE TABLE BUS_SHIFT (
     driver_id             INT  REFERENCES APP_USER(id),
     -- [FIX-1] Đã xoá execution_date: dùng NODE.execution_date qua join để tránh inconsistency
     shift_order           INT,
+    direction        SMALLINT CHECK (direction IN (1, 2)),      -- 1: A→B, 2: B→A
     planned_departuretime TIME,
     planned_arrivaltime   TIME,
     status                VARCHAR(50),
