@@ -6,7 +6,7 @@ import com.bfms.bfms_backend.dtos.res.BusShiftResponse;
 import com.bfms.bfms_backend.dtos.res.ShiftResponse;
 import com.bfms.bfms_backend.entity.BusShift;
 import jakarta.validation.Valid;
-import com.bfms.bfms_backend.service.BusShiftService;
+import com.bfms.bfms_backend.service.impl.BusShiftServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,14 +14,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/shifts")
 @RequiredArgsConstructor
 public class BusShiftController {
 
-    private final BusShiftService busShiftService;
+    private final BusShiftServiceImpl busShiftService;
 
-    // 1. POST /nodes/{nodeId}/shifts - Tạo ca chạy mới gắn với nốt chạy
-    @PostMapping("/nodes/{nodeId}/shifts")
+    // 1. POST /api/v1/shifts/node/{nodeId} - Tạo ca chạy mới gắn với nốt chạy
+    @PostMapping("/node/{nodeId}")
     public ResponseEntity<BusShift> createBusShift(@PathVariable Integer nodeId, @RequestBody BusShiftRequest request) {
         return ResponseEntity.ok(busShiftService.createBusShift(nodeId, request));
     }

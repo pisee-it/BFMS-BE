@@ -6,6 +6,7 @@ import com.bfms.bfms_backend.repository.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -39,6 +40,9 @@ public class BusShiftServiceRevenueTest {
 
     @Autowired
     private DailyTicketStatRepository dailyTicketStatRepository;
+
+    @Autowired
+    private TicketRepository ticketRepository;
 
     private Integer shiftId;
     private Integer nodeId;
@@ -101,8 +105,10 @@ public class BusShiftServiceRevenueTest {
     }
 
     @AfterEach
+    @Transactional
     void tearDown() {
         try {
+            ticketRepository.deleteByBusShiftId(shiftId);
             busShiftRepository.deleteById(shiftId);
             busRepository.deleteById(busId);
             userRepository.deleteById(driverId);

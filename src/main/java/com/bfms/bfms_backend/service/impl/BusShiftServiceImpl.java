@@ -25,6 +25,7 @@ public class BusShiftServiceImpl implements BusShiftService {
     private final BusRepository busRepository;
     private final AppUserRepository userRepository;
     private final DailyTicketStatRepository dailyTicketStatRepository;
+    private final TicketRepository ticketRepository;
 
     @Override
     public BusShift createBusShift(Integer nodeId, BusShiftRequest request) {
@@ -85,26 +86,29 @@ public class BusShiftServiceImpl implements BusShiftService {
             throw new RuntimeException("Only shifts with 'IN_PROGRESS' status can be completed.");
         }
 
-        // 4. Tính toán doanh thu (Chỉ tính doanh thu dựa trên vé lượt)
+        // 4. Tính toán doanh thu (Chỉ tính doanh thu dựa trên vé lượt - Single Ticket)
         BigDecimal singlePrice = shift.getNode().getRoute().getPrice();
         BigDecimal revenue = singlePrice.multiply(BigDecimal.valueOf(request.total_single_tickets()));
 
-        // 5. Cập nhật dữ liệu
+        // 5. Cập nhật dữ liệu Ca chạy
         shift.setTotalSingleTickets(request.total_single_tickets());
         shift.setTotalMonthlyTickets(request.total_monthly_tickets());
         shift.setShiftRevenue(revenue);
-        shift.setStatus(ShiftStatus.COMPLETED); // Chuyển trạng thái sang COMPLETED
+        shift.setStatus(ShiftStatus.COMPLETED);
 
         busShiftRepository.saveAndFlush(shift);
 
-        // 6. Tính tổng hành khách của Node từ tất cả các ca xe (BUS_SHIFT)
+        // 6. Lưu vết vào bảng TICKET (Audit)
+        saveTicketRecord(shift, "SINGLE", request.total_single_tickets());
+        saveTicketRecord(shift, "MONTHLY", request.total_monthly_tickets());
+
+        // 7. Cập nhật Node (Derived Field: total_passengers)
         Node node = shift.getNode();
         Integer totalPassengers = busShiftRepository.sumPassengersByNodeId(node.getId(), ShiftStatus.COMPLETED);
         node.setTotalPassengers(totalPassengers);
-
         nodeRepository.save(node);
 
-        // 7. Cập nhật Daily Ticket Stat
+        // 8. Cập nhật Daily Ticket Stat
         LocalDate reportDate = node.getExecutionDate();
         Integer routeId = node.getRoute().getId();
         DailyTicketStat stat = dailyTicketStatRepository.findByRouteIdAndReportDate(routeId, reportDate)
@@ -118,6 +122,16 @@ public class BusShiftServiceImpl implements BusShiftService {
         dailyTicketStatRepository.save(stat);
 
         return mapToResponse(busShiftRepository.save(shift));
+    }
+
+    private void saveTicketRecord(BusShift shift, String type, Integer quantity) {
+        if (quantity != null && quantity > 0) {
+            Ticket ticket = new Ticket();
+            ticket.setBusShift(shift);
+            ticket.setType(type);
+            ticket.setQuantity(quantity);
+            ticketRepository.save(ticket);
+        }
     }
 
     private ShiftResponse mapToResponse(BusShift shift) {
