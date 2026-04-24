@@ -3,12 +3,12 @@ package com.bfms.bfms_backend.controller;
 import com.bfms.bfms_backend.dtos.res.NotificationResponse;
 import com.bfms.bfms_backend.entity.AppUser;
 import com.bfms.bfms_backend.service.NotificationService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/notifications")
@@ -21,12 +21,11 @@ public class NotificationController {
     }
 
     @GetMapping
-    public ResponseEntity<List<NotificationResponse>> getMyNotifications() {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<NotificationResponse>> getMyNotifications(Pageable pageable) {
         AppUser currentUser = (AppUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        List<NotificationResponse> responses = notificationService.getNotificationsForUser(currentUser.getId())
-                .stream()
-                .map(n -> new NotificationResponse(n.getId(), n.getMessage(), n.getIsRead(), n.getCreatedAt()))
-                .collect(Collectors.toList());
+        Page<NotificationResponse> responses = notificationService.getNotificationsForUser(currentUser.getId(), pageable)
+                .map(n -> new NotificationResponse(n.getId(), n.getMessage(), n.getIsRead(), n.getCreatedAt()));
         return ResponseEntity.ok(responses);
     }
 

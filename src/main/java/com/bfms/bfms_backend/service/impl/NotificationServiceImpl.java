@@ -5,11 +5,12 @@ import com.bfms.bfms_backend.entity.Notification;
 import com.bfms.bfms_backend.repository.AppUserRepository;
 import com.bfms.bfms_backend.repository.NotificationRepository;
 import com.bfms.bfms_backend.service.NotificationService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 public class NotificationServiceImpl implements NotificationService {
@@ -38,8 +39,8 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public List<Notification> getNotificationsForUser(Integer userId) {
-        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    public Page<Notification> getNotificationsForUser(Integer userId, Pageable pageable) {
+        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
     }
 
     @Override
