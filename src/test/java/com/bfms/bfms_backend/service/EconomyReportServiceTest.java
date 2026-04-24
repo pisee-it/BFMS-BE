@@ -45,7 +45,9 @@ class EconomyReportServiceTest {
     void setUp() {
         route = new Route();
         route.setId(1);
-        route.setName("Route 01");
+        route.setRouteNumber("01");
+        route.setStopA("Stop A");
+        route.setStopB("Stop B");
         
         date = LocalDate.of(2026, 4, 24);
     }
