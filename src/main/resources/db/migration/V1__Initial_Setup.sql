@@ -167,3 +167,14 @@ CREATE TABLE AD_ASSIGNMENT (
     -- Trạng thái dán: 'ACTIVE' | 'REMOVED'
     status          VARCHAR(20)
 );
+
+-- 13. Bảng chi phí vận hành
+CREATE TABLE OPERATIONAL_COST (
+    id          SERIAL PRIMARY KEY,
+    route_id    INT  REFERENCES ROUTE(id),
+    cost_date   DATE NOT NULL,
+    type        VARCHAR(50) CHECK (type IN ('FUEL', 'MAINTENANCE', 'SALARY', 'OTHER')),
+    amount      DECIMAL(18,2) NOT NULL CHECK (amount >= 0),
+    description TEXT,
+    created_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
