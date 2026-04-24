@@ -164,7 +164,6 @@ CREATE TABLE AD_ASSIGNMENT (
     id              SERIAL PRIMARY KEY,
     ad_contract_id  INT  REFERENCES AD_CONTRACT(id),
     bus_id          INT  REFERENCES BUS(id),
-    position        VARCHAR(100),
     -- Trạng thái dán: 'ACTIVE' | 'REMOVED'
     status          VARCHAR(20)
 );

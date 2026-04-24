@@ -7,6 +7,6 @@ public record AdAssignmentResponse(
         Integer adContractId,
         Integer busId,
         String licensePlate,
-        String position,
-        AdAssignmentStatus status
+        AdAssignmentStatus status,
+        Boolean needsAttention
 ) {}

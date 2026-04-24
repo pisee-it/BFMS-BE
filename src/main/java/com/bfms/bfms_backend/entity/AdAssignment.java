@@ -24,9 +24,6 @@ public class AdAssignment {
     @JoinColumn(name = "bus_id")
     private Bus bus;
 
-    @Column(name = "position")
-    private String position;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private AdAssignmentStatus status;

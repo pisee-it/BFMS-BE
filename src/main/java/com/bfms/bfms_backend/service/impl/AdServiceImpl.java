@@ -13,6 +13,7 @@ import com.bfms.bfms_backend.service.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -136,7 +137,6 @@ public class AdServiceImpl implements AdService {
         AdAssignment assignment = new AdAssignment();
         assignment.setAdContract(contract);
         assignment.setBus(bus);
-        assignment.setPosition(request.position());
         assignment.setStatus(AdAssignmentStatus.ACTIVE);
 
         // Cập nhật trạng thái xe
@@ -217,12 +217,15 @@ public class AdServiceImpl implements AdService {
     }
 
     private AdAssignmentResponse mapToAssignmentResponse(AdAssignment assignment) {
+        boolean needsAttention = assignment.getAdContract().getEndDate().isBefore(LocalDate.now())
+                && assignment.getStatus() == AdAssignmentStatus.ACTIVE;
+
         return new AdAssignmentResponse(
                 assignment.getId(),
                 assignment.getAdContract().getId(),
                 assignment.getBus().getId(),
                 assignment.getBus().getLicensePlate(),
-                assignment.getPosition(),
-                assignment.getStatus());
+                assignment.getStatus(),
+                needsAttention);
     }
 }

@@ -91,7 +91,7 @@ public class AdServiceTest {
         assertEquals(AdContractStatus.APPROVED, approvedRes.approvalStatus());
 
         // 4. Assign Ad to Bus
-        AdAssignmentRequest assignReq = new AdAssignmentRequest(approvedRes.id(), busId, "Sides");
+        AdAssignmentRequest assignReq = new AdAssignmentRequest(approvedRes.id(), busId);
         AdAssignmentResponse assignRes = adService.assignAdToBus(assignReq);
         assertNotNull(assignRes.id());
         assertEquals(AdAssignmentStatus.ACTIVE, assignRes.status());
@@ -136,7 +136,7 @@ public class AdServiceTest {
         adService.approveContract(contractRes.id());
 
         // 2. Assign first time - Success
-        adService.assignAdToBus(new AdAssignmentRequest(contractRes.id(), busId, "Left Side"));
+        adService.assignAdToBus(new AdAssignmentRequest(contractRes.id(), busId));
         
         // Verify bus is advertised
         Bus bus = busRepository.findById(busId).orElseThrow();
@@ -144,7 +144,7 @@ public class AdServiceTest {
 
         // 3. Assign second time to the same bus - Should throw Exception
         assertThrows(RuntimeException.class, () -> {
-            adService.assignAdToBus(new AdAssignmentRequest(contractRes.id(), busId, "Right Side"));
+            adService.assignAdToBus(new AdAssignmentRequest(contractRes.id(), busId));
         }, "Xe này đã được dán quảng cáo, không thể phân bổ thêm.");
     }
 }
