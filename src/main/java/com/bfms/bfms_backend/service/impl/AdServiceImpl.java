@@ -9,6 +9,7 @@ import com.bfms.bfms_backend.dtos.res.AdContractResponse;
 import com.bfms.bfms_backend.entity.*;
 import com.bfms.bfms_backend.repository.*;
 import com.bfms.bfms_backend.service.AdService;
+import com.bfms.bfms_backend.service.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,17 +24,23 @@ public class AdServiceImpl implements AdService {
     private final AdAssignmentRepository adAssignmentRepository;
     private final BusRepository busRepository;
     private final RouteRepository routeRepository;
+    private final NotificationService notificationService;
+    private final AppUserRepository appUserRepository;
 
     public AdServiceImpl(AdCompanyRepository adCompanyRepository,
-                         AdContractRepository adContractRepository,
-                         AdAssignmentRepository adAssignmentRepository,
-                         BusRepository busRepository,
-                         RouteRepository routeRepository) {
+            AdContractRepository adContractRepository,
+            AdAssignmentRepository adAssignmentRepository,
+            BusRepository busRepository,
+            RouteRepository routeRepository,
+            NotificationService notificationService,
+            AppUserRepository appUserRepository) {
         this.adCompanyRepository = adCompanyRepository;
         this.adContractRepository = adContractRepository;
         this.adAssignmentRepository = adAssignmentRepository;
         this.busRepository = busRepository;
         this.routeRepository = routeRepository;
+        this.notificationService = notificationService;
+        this.appUserRepository = appUserRepository;
     }
 
     @Override
@@ -58,7 +65,7 @@ public class AdServiceImpl implements AdService {
     public AdContractResponse createContract(AdContractRequest request) {
         AdCompany company = adCompanyRepository.findById(request.companyId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy công ty quảng cáo."));
-        
+
         Route route = routeRepository.findById(request.routeId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tuyến xe."));
 
@@ -85,9 +92,19 @@ public class AdServiceImpl implements AdService {
     public AdContractResponse approveContract(Integer contractId) {
         AdContract contract = adContractRepository.findById(contractId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng quảng cáo."));
-        
+
         contract.setApprovalStatus(AdContractStatus.APPROVED);
         AdContract saved = adContractRepository.save(contract);
+
+        // Gửi thông báo cho tất cả Admin
+        List<AppUser> admins = appUserRepository.findByRole(Role.ADMIN);
+        String message = String.format("Hợp đồng quảng cáo #%d (%s) đã được phê duyệt bởi Kế toán.",
+                saved.getId(), saved.getCompany().getName());
+
+        for (AppUser admin : admins) {
+            notificationService.notify(admin.getId(), message);
+        }
+
         return mapToContractResponse(saved);
     }
 
@@ -97,12 +114,18 @@ public class AdServiceImpl implements AdService {
         AdContract contract = adContractRepository.findById(request.adContractId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng quảng cáo."));
 
-        if (contract.getApprovalStatus() != AdContractStatus.APPROVED && contract.getApprovalStatus() != AdContractStatus.PAID) {
+        if (contract.getApprovalStatus() != AdContractStatus.APPROVED
+                && contract.getApprovalStatus() != AdContractStatus.PAID) {
             throw new RuntimeException("Hợp đồng chưa được phê duyệt hoặc thanh toán, không thể gán quảng cáo.");
         }
 
         Bus bus = busRepository.findById(request.busId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy xe buýt."));
+
+        // US-05: Chỉ chọn xe chưa dán quảng cáo (is_advertised = false)
+        if (Boolean.TRUE.equals(bus.getIsAdvertised())) {
+            throw new RuntimeException("Xe này đã được dán quảng cáo, không thể phân bổ thêm.");
+        }
 
         // Kiểm tra xem số lượng xe đã gán có vượt quá hợp đồng không
         List<AdAssignment> currentAssignments = adAssignmentRepository.findByAdContractId(request.adContractId());
@@ -129,8 +152,9 @@ public class AdServiceImpl implements AdService {
     public AdContractResponse requestDeleteContract(Integer contractId) {
         AdContract contract = adContractRepository.findById(contractId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng quảng cáo."));
-        
-        // Chỉ cho phép yêu cầu xóa nếu hợp đồng không ở trạng thái DELETE_REQUESTED hoặc đã bị REJECTED
+
+        // Chỉ cho phép yêu cầu xóa nếu hợp đồng không ở trạng thái DELETE_REQUESTED
+        // hoặc đã bị REJECTED
         contract.setApprovalStatus(AdContractStatus.DELETE_REQUESTED);
         AdContract saved = adContractRepository.save(contract);
         return mapToContractResponse(saved);
@@ -173,8 +197,7 @@ public class AdServiceImpl implements AdService {
                 company.getId(),
                 company.getName(),
                 company.getTaxCode(),
-                company.getContact()
-        );
+                company.getContact());
     }
 
     private AdContractResponse mapToContractResponse(AdContract contract) {
@@ -190,8 +213,7 @@ public class AdServiceImpl implements AdService {
                 contract.getBusQuantity(),
                 contract.getApprovalStatus(),
                 contract.getContractFileUrl(),
-                contract.getCreatedAt()
-        );
+                contract.getCreatedAt());
     }
 
     private AdAssignmentResponse mapToAssignmentResponse(AdAssignment assignment) {
@@ -201,7 +223,6 @@ public class AdServiceImpl implements AdService {
                 assignment.getBus().getId(),
                 assignment.getBus().getLicensePlate(),
                 assignment.getPosition(),
-                assignment.getStatus()
-        );
+                assignment.getStatus());
     }
 }

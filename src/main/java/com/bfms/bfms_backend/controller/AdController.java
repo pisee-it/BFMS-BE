@@ -6,7 +6,7 @@ import com.bfms.bfms_backend.dtos.req.AdContractRequest;
 import com.bfms.bfms_backend.dtos.res.AdAssignmentResponse;
 import com.bfms.bfms_backend.dtos.res.AdCompanyResponse;
 import com.bfms.bfms_backend.dtos.res.AdContractResponse;
-import com.bfms.bfms_backend.service.impl.AdServiceImpl;
+import com.bfms.bfms_backend.service.AdService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -21,9 +21,9 @@ import java.util.List;
 @RequestMapping("/api/v1/ads")
 public class AdController {
 
-    private final AdServiceImpl adService;
+    private final AdService adService;
 
-    public AdController(AdServiceImpl adService) {
+    public AdController(AdService adService) {
         this.adService = adService;
     }
 

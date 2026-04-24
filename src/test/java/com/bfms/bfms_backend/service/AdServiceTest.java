@@ -125,4 +125,26 @@ public class AdServiceTest {
             adService.createCompany(new AdCompanyRequest("Co 2", taxCode, "info"));
         });
     }
+
+    @Test
+    void testAssignAdToBus_AlreadyAdvertised_ShouldThrowException() {
+        // 1. Setup - Create company, contract, and approve
+        AdCompanyResponse companyRes = adService.createCompany(new AdCompanyRequest("Test Co 2", "TAX-2", "Contact"));
+        AdContractResponse contractRes = adService.createContract(new AdContractRequest(
+                companyRes.id(), routeId, LocalDate.now(), LocalDate.now().plusMonths(1),
+                new BigDecimal("1000000"), 5, "http://file.pdf"));
+        adService.approveContract(contractRes.id());
+
+        // 2. Assign first time - Success
+        adService.assignAdToBus(new AdAssignmentRequest(contractRes.id(), busId, "Left Side"));
+        
+        // Verify bus is advertised
+        Bus bus = busRepository.findById(busId).orElseThrow();
+        assertTrue(bus.getIsAdvertised());
+
+        // 3. Assign second time to the same bus - Should throw Exception
+        assertThrows(RuntimeException.class, () -> {
+            adService.assignAdToBus(new AdAssignmentRequest(contractRes.id(), busId, "Right Side"));
+        }, "Xe này đã được dán quảng cáo, không thể phân bổ thêm.");
+    }
 }

@@ -11,4 +11,6 @@ public interface AppUserRepository extends JpaRepository<AppUser, Integer> {
     // Tìm kiếm người dùng theo username để phục vụ quá trình xác thực (Login/JWT)
     // Optional tránh lỗi NullPointerException khi không tìm thấy user
     Optional<AppUser> findByUsername(String username);
+
+    java.util.List<com.bfms.bfms_backend.entity.AppUser> findByRole(com.bfms.bfms_backend.entity.Role role);
 }

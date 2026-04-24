@@ -5,16 +5,16 @@ import com.bfms.bfms_backend.dtos.res.BusResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import com.bfms.bfms_backend.service.impl.BusServiceImpl;
+import com.bfms.bfms_backend.service.BusService;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/buses")
 public class BusController {
-    private final BusServiceImpl busService;
+    private final BusService busService;
 
-    public BusController(BusServiceImpl busService) {
+    public BusController(BusService busService) {
         this.busService = busService;
     }
 

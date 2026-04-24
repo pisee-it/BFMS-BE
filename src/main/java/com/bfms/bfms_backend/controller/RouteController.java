@@ -5,16 +5,16 @@ import com.bfms.bfms_backend.dtos.res.RouteResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import com.bfms.bfms_backend.service.impl.RouteServiceImpl;
+import com.bfms.bfms_backend.service.RouteService;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/routes")
 public class RouteController {
-    private final RouteServiceImpl routeService;
+    private final RouteService routeService;
 
-    public RouteController(RouteServiceImpl routeService) {
+    public RouteController(RouteService routeService) {
         this.routeService = routeService;
     }
 
