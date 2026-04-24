@@ -34,7 +34,7 @@ public interface ReportRepository extends JpaRepository<EconomyReport, Integer> 
      * Tổng hợp toàn bộ hệ thống trong một khoảng thời gian.
      * Phục vụ User Story US-01 cho Owner.
      */
-    @Query("SELECT SUM(er.totalTicketRevenue), SUM(er.totalAdRevenue), SUM(er.taxDeduction), SUM(er.netProfit) " +
+    @Query("SELECT SUM(er.totalTicketRevenue), SUM(er.totalAdRevenue), SUM(er.taxDeduction), SUM(er.netProfit), SUM(er.totalPassengers) " +
            "FROM EconomyReport er " +
            "WHERE er.reportDate BETWEEN :startDate AND :endDate")
     Object[] getTotalSystemSummary(@Param("startDate") LocalDate startDate, 
