@@ -76,6 +76,52 @@ class ReportServiceTest {
     }
 
     @Test
+    void testGetRouteReport_NetProfitFormulaValidation() {
+        // Giả sử dữ liệu không có chi phí vận hành (costs = 0)
+        // Ticket = 1.000.000
+        // Ad Gross = 1.100.000 -> Net Ad = 1.000.000, VAT = 100.000
+        // Operating Profit = 2.000.000
+        // TNDN (20%) = 400.000
+        // Tax Deduction = 100.000 (VAT) + 400.000 (TNDN) = 500.000
+        // Net Profit = 2.000.000 - 400.000 = 1.600.000
+        // Kiểm tra công thức: 1.000.000 (Ticket) + 1.100.000 (Ad Gross) - 500.000 (Tax) = 1.600.000 (Net Profit) -> ĐÚNG
+        
+        when(routeRepository.findById(1)).thenReturn(Optional.of(route));
+        
+        Object[] summary = new Object[]{
+            new BigDecimal("1000000"), 
+            new BigDecimal("1100000"), 
+            100L, 
+            new BigDecimal("500000"), 
+            new BigDecimal("1600000")
+        };
+        when(reportRepository.getSummaryByRouteAndDateRange(anyInt(), any(), any())).thenReturn(summary);
+
+        RouteReportResponse response = reportService.getRouteReport(1, startDate, endDate);
+
+        BigDecimal calculatedNetProfit = response.totalTicketRevenue()
+                .add(response.totalAdRevenue())
+                .subtract(response.taxDeduction());
+        
+        assertEquals(0, calculatedNetProfit.compareTo(response.netProfit()), 
+                "Lợi nhuận ròng phải bằng (Vé + Quảng cáo - Thuế) khi chi phí vận hành bằng 0");
+    }
+
+    @Test
+    void testGetRouteReport_CallsSyncForEachDay() {
+        when(routeRepository.findById(1)).thenReturn(Optional.of(route));
+        when(reportRepository.getSummaryByRouteAndDateRange(anyInt(), any(), any())).thenReturn(new Object[5]);
+
+        LocalDate start = LocalDate.of(2026, 4, 1);
+        LocalDate end = LocalDate.of(2026, 4, 3); // 3 ngày
+        
+        reportService.getRouteReport(1, start, end);
+
+        // Phải gọi sync 3 lần cho 2026-04-01, 02, 03
+        verify(economyReportService, times(3)).syncEconomyReports(any(LocalDate.class));
+    }
+
+    @Test
     void testExportExcel_NotNull() {
         when(routeRepository.findById(1)).thenReturn(Optional.of(route));
         Object[] summary = new Object[]{

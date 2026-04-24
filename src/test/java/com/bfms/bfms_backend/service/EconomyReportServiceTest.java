@@ -111,6 +111,22 @@ class EconomyReportServiceTest {
     }
 
     @Test
+    void testGetSystemTotalRevenue_Month() {
+        LocalDate april15 = LocalDate.of(2026, 4, 15);
+        LocalDate firstDay = LocalDate.of(2026, 4, 1);
+        LocalDate lastDay = LocalDate.of(2026, 4, 30);
+
+        when(reportRepository.getTotalSystemSummary(eq(firstDay), eq(lastDay)))
+                .thenReturn(new Object[]{BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, 0L});
+
+        economyReportService.getSystemTotalRevenue("month", april15);
+
+        // Kiểm tra xem có gọi sync cho tất cả 30 ngày của tháng 4 không
+        verify(routeRepository, times(30)).findAll();
+        verify(reportRepository, times(1)).getTotalSystemSummary(eq(firstDay), eq(lastDay));
+    }
+
+    @Test
     void testSyncEconomyReports() {
         when(routeRepository.findAll()).thenReturn(Collections.singletonList(route));
         when(dailyTicketStatRepository.findByRouteIdAndReportDate(anyInt(), any(LocalDate.class)))
