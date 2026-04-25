@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.bfms.bfms_backend.security.AuthService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
@@ -20,7 +22,7 @@ public class AuthController {
 
     // 1. Endpoint xử lý login
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         // 2. Gọi service xử lý và trả về mã 200 OK kèm Token
         return ResponseEntity.ok(authService.login(request));
     }

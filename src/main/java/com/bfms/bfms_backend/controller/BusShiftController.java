@@ -22,7 +22,7 @@ public class BusShiftController {
 
     // 1. POST /api/v1/shifts/node/{nodeId} - Tạo ca chạy mới gắn với nốt chạy
     @PostMapping("/node/{nodeId}")
-    public ResponseEntity<BusShift> createBusShift(@PathVariable Integer nodeId, @RequestBody BusShiftRequest request) {
+    public ResponseEntity<BusShift> createBusShift(@PathVariable Integer nodeId, @Valid @RequestBody BusShiftRequest request) {
         return ResponseEntity.ok(busShiftService.createBusShift(nodeId, request));
     }
 

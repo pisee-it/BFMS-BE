@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.bfms.bfms_backend.service.RouteService;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -28,14 +29,14 @@ public class RouteController {
     // 2. Tạo mới tuyến (Dành cho ADMIN)
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<RouteResponse> create(@RequestBody RouteRequest request) {
+    public ResponseEntity<RouteResponse> create(@Valid @RequestBody RouteRequest request) {
         return ResponseEntity.ok(routeService.createRoute(request));
     }
 
     // 3. Cập nhật (Dành cho ADMIN)
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<RouteResponse> update(@PathVariable Integer id, @RequestBody RouteRequest request) {
+    public ResponseEntity<RouteResponse> update(@PathVariable Integer id, @Valid @RequestBody RouteRequest request) {
         return ResponseEntity.ok(routeService.updateRoute(id, request));
     }
 

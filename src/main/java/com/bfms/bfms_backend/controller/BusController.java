@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.bfms.bfms_backend.service.BusService;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -27,13 +28,13 @@ public class BusController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<BusResponse> create(@RequestBody BusRequest request) {
+    public ResponseEntity<BusResponse> create(@Valid @RequestBody BusRequest request) {
         return ResponseEntity.ok(busService.createBus(request));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<BusResponse> update(@PathVariable Integer id, @RequestBody BusRequest request) {
+    public ResponseEntity<BusResponse> update(@PathVariable Integer id, @Valid @RequestBody BusRequest request) {
         return ResponseEntity.ok(busService.updateBus(id, request));
     }
 

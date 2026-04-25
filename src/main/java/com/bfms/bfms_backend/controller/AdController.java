@@ -7,6 +7,7 @@ import com.bfms.bfms_backend.dtos.res.AdAssignmentResponse;
 import com.bfms.bfms_backend.dtos.res.AdCompanyResponse;
 import com.bfms.bfms_backend.dtos.res.AdContractResponse;
 import com.bfms.bfms_backend.service.AdService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +32,7 @@ public class AdController {
 
     @PostMapping("/companies")
     @PreAuthorize("hasAnyRole('ADVERTISING', 'ADMIN')")
-    public ResponseEntity<AdCompanyResponse> createCompany(@RequestBody AdCompanyRequest request) {
+    public ResponseEntity<AdCompanyResponse> createCompany(@Valid @RequestBody AdCompanyRequest request) {
         return ResponseEntity.ok(adService.createCompany(request));
     }
 
@@ -46,7 +47,7 @@ public class AdController {
     // US-04: Tạo yêu cầu hợp đồng
     @PostMapping("/contracts")
     @PreAuthorize("hasRole('ADVERTISING')")
-    public ResponseEntity<AdContractResponse> createContract(@RequestBody AdContractRequest request) {
+    public ResponseEntity<AdContractResponse> createContract(@Valid @RequestBody AdContractRequest request) {
         return ResponseEntity.ok(adService.createContract(request));
     }
 
@@ -82,7 +83,7 @@ public class AdController {
     // US-05: Phân bổ quảng cáo lên xe
     @PostMapping("/assignments")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<AdAssignmentResponse> assignAdToBus(@RequestBody AdAssignmentRequest request) {
+    public ResponseEntity<AdAssignmentResponse> assignAdToBus(@Valid @RequestBody AdAssignmentRequest request) {
         return ResponseEntity.ok(adService.assignAdToBus(request));
     }
 }
