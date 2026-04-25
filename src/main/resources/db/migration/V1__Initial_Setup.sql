@@ -21,7 +21,7 @@ CREATE TABLE APP_USER (
     age         INT          CHECK (age > 0),
     licence_type VARCHAR(20),                                   -- Cho tài xế hoặc nhân viên
     avatar_url  TEXT,
-    role        VARCHAR(20)  CHECK (role IN (
+    role        VARCHAR(20) NOT NULL CHECK (role IN (
                                    'OWNER', 'ACCOUNTANT', 'ADVERTISING', 'STAFF', 'ADMIN'
     ))
 );
@@ -39,9 +39,9 @@ CREATE TABLE NOTIFICATION (
 CREATE TABLE ROUTE (
     id                  SERIAL PRIMARY KEY,
     route_number        VARCHAR(20)    NOT NULL,
-    stop_A              VARCHAR(100),
-    stop_B              VARCHAR(100),
-    path                TEXT,
+    stop_A              VARCHAR(100)   NOT NULL,
+    stop_B              VARCHAR(100)   NOT NULL,
+    path                TEXT           NOT NULL,
     distance_AB         DECIMAL(10,2)  CHECK (distance_AB >= 0),
     distance_BA         DECIMAL(10,2)  CHECK (distance_BA >= 0),
     operation_start TIME,
@@ -64,15 +64,15 @@ CREATE TABLE NODE (
 -- 5. Bảng thông tin xe buýt
 CREATE TABLE BUS (
     id            SERIAL PRIMARY KEY,
-    route_id      INT  REFERENCES ROUTE(id),
-    bus_model     VARCHAR(100),
-    manufacturer  VARCHAR(100),
-    capacity      INT    CHECK (capacity > 0),
-    yom           INT,                                           -- Năm sản xuất
+    route_id      INT  NOT NULL REFERENCES ROUTE(id),
+    bus_model     VARCHAR(100) NOT NULL,
+    manufacturer  VARCHAR(100) NOT NULL,
+    capacity      INT    NOT NULL CHECK (capacity > 0),
+    yom           INT    NOT NULL,                               -- Năm sản xuất
     license_plate VARCHAR(20) UNIQUE NOT NULL,
     -- [FIX-2] Thêm CHECK để tránh ghi sai trạng thái
-    status        VARCHAR(20) CHECK (status IN ('ACTIVE', 'INACTIVE', 'MAINTENANCE')),
-    is_advertised BOOLEAN DEFAULT FALSE                         -- Đồng bộ với AD_ASSIGNMENT
+    status        VARCHAR(20) NOT NULL CHECK (status IN ('ACTIVE', 'INACTIVE', 'MAINTENANCE')),
+    is_advertised BOOLEAN DEFAULT FALSE NOT NULL                -- Đồng bộ với AD_ASSIGNMENT
 );
 
 -- 6. Bảng báo cáo kinh tế
@@ -92,7 +92,7 @@ CREATE TABLE ECONOMY_REPORT (
 -- 7. Bảng thống kê vé hàng ngày
 CREATE TABLE DAILY_TICKET_STAT (
     id                   SERIAL PRIMARY KEY,
-    route_id             INT  REFERENCES ROUTE(id),
+    route_id             INT  NOT NULL REFERENCES ROUTE(id),
     report_date          DATE NOT NULL,
     single_ticket_count  INT  DEFAULT 0,
     monthly_ticket_count INT  DEFAULT 0,
@@ -144,14 +144,14 @@ CREATE TABLE AD_COMPANY (
 -- 11. Bảng hợp đồng quảng cáo
 CREATE TABLE AD_CONTRACT (
     id                SERIAL PRIMARY KEY,
-    company_id        INT  REFERENCES AD_COMPANY(id),
-    route_id          INT  REFERENCES ROUTE(id),
-    start_date        DATE,
-    end_date          DATE CHECK (end_date > start_date),
-    price_per_bus     DECIMAL(15,2)  CHECK (price_per_bus >= 0),
-    bus_quantity      INT            CHECK (bus_quantity > 0),
+    company_id        INT  NOT NULL REFERENCES AD_COMPANY(id),
+    route_id          INT  NOT NULL REFERENCES ROUTE(id),
+    start_date        DATE NOT NULL,
+    end_date          DATE NOT NULL CHECK (end_date > start_date),
+    price_per_bus     DECIMAL(15,2)  NOT NULL CHECK (price_per_bus >= 0),
+    bus_quantity      INT            NOT NULL CHECK (bus_quantity > 0),
     -- [FIX-3] Thêm CHECK để tránh ghi sai trạng thái phê duyệt
-    approval_status   VARCHAR(20) CHECK (approval_status IN (
+    approval_status   VARCHAR(20) NOT NULL CHECK (approval_status IN (
                                       'PENDING', 'APPROVED', 'PAID', 'REJECTED'
     )),
     contract_file_url TEXT,
@@ -171,10 +171,17 @@ CREATE TABLE AD_ASSIGNMENT (
 -- 13. Bảng chi phí vận hành
 CREATE TABLE OPERATIONAL_COST (
     id          SERIAL PRIMARY KEY,
-    route_id    INT  REFERENCES ROUTE(id),
+    route_id    INT  NOT NULL REFERENCES ROUTE(id),
     cost_date   DATE NOT NULL,
-    type        VARCHAR(50) CHECK (type IN ('FUEL', 'MAINTENANCE', 'SALARY', 'OTHER')),
+    type        VARCHAR(50) NOT NULL CHECK (type IN ('FUEL', 'MAINTENANCE', 'SALARY', 'OTHER')),
     amount      DECIMAL(18,2) NOT NULL CHECK (amount >= 0),
     description TEXT,
     created_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 14. Index tối ưu hoá truy vấn
+-- Hỗ trợ báo cáo doanh thu theo tuyến và ngày (US-01, US-02)
+CREATE INDEX idx_daily_ticket_stat_route_date ON DAILY_TICKET_STAT(route_id, report_date);
+
+-- Hỗ trợ tìm kiếm ca chạy theo nốt và trạng thái (US-09)
+CREATE INDEX idx_bus_shift_node_status ON BUS_SHIFT(node_id, status);
