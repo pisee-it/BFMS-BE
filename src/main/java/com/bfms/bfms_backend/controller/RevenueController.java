@@ -21,7 +21,7 @@ public class RevenueController {
     private final EconomyReportService economyReportService;
 
     @GetMapping("/total")
-    @PreAuthorize("hasRole('OWNER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     public ResponseEntity<RevenueResponse> getSystemTotalRevenue(
             @RequestParam(defaultValue = "day") String timeframe,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date

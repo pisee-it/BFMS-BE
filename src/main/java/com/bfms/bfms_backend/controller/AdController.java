@@ -31,7 +31,7 @@ public class AdController {
     // --- Quản lý Công ty Quảng cáo ---
 
     @PostMapping("/companies")
-    @PreAuthorize("hasAnyRole('ADVERTISING', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADVERTISING', 'ADMIN', 'OWNER')")
     public ResponseEntity<AdCompanyResponse> createCompany(@Valid @RequestBody AdCompanyRequest request) {
         return ResponseEntity.ok(adService.createCompany(request));
     }
@@ -46,7 +46,7 @@ public class AdController {
 
     // US-04: Tạo yêu cầu hợp đồng
     @PostMapping("/contracts")
-    @PreAuthorize("hasRole('ADVERTISING')")
+    @PreAuthorize("hasAnyRole('ADVERTISING', 'OWNER')")
     public ResponseEntity<AdContractResponse> createContract(@Valid @RequestBody AdContractRequest request) {
         return ResponseEntity.ok(adService.createContract(request));
     }
@@ -82,7 +82,7 @@ public class AdController {
 
     // US-05: Phân bổ quảng cáo lên xe
     @PostMapping("/assignments")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
     public ResponseEntity<AdAssignmentResponse> assignAdToBus(@Valid @RequestBody AdAssignmentRequest request) {
         return ResponseEntity.ok(adService.assignAdToBus(request));
     }
