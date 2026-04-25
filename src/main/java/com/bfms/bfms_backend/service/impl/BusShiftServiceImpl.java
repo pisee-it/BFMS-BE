@@ -143,6 +143,8 @@ public class BusShiftServiceImpl implements BusShiftService {
                 shift.getStatus(),
                 shift.getShiftRevenue(),
                 shift.getPlannedDepartureTime(),
-                shift.getDirection());
+                shift.getDirection(),
+                shift.getTotalSingleTickets(),
+                shift.getTotalMonthlyTickets());
     }
 }

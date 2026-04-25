@@ -13,5 +13,7 @@ public record ShiftResponse(
         ShiftStatus status,
         BigDecimal shiftRevenue,
         LocalTime plannedDepartureTime,
-        Short direction
+        Short direction,
+        Integer singleTicketCount,
+        Integer monthlyTicketCount
 ) {}
