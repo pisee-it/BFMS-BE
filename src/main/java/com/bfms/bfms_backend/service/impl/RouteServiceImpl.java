@@ -46,6 +46,14 @@ public class RouteServiceImpl implements RouteService {
     @Override
     @Transactional
     public RouteResponse createRoute(RouteRequest request) {
+        if (routeRepository.findByRouteNumber(request.routeNumber()).isPresent()) {
+            throw new AppException(ErrorCode.ROUTE_ALREADY_EXISTS);
+        }
+
+        if (request.operationEnd().isBefore(request.operationStart())) {
+            throw new AppException(ErrorCode.INVALID_TIME_RANGE);
+        }
+
         validateRouteDistances(request.distanceAB(), request.distanceBA());
 
         Route route = routeMapper.toEntity(request);
@@ -60,6 +68,16 @@ public class RouteServiceImpl implements RouteService {
     @Transactional
     public RouteResponse updateRoute(Integer id, RouteRequest request) {
         Route route = lookupHelper.getRoute(id);
+
+        if (!route.getRouteNumber().equals(request.routeNumber())) {
+            if (routeRepository.findByRouteNumber(request.routeNumber()).isPresent()) {
+                throw new AppException(ErrorCode.ROUTE_ALREADY_EXISTS);
+            }
+        }
+
+        if (request.operationEnd().isBefore(request.operationStart())) {
+            throw new AppException(ErrorCode.INVALID_TIME_RANGE);
+        }
 
         routeMapper.updateEntity(request, route);
         return routeMapper.toResponse(routeRepository.save(route));

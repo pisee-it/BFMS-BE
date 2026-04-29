@@ -11,10 +11,12 @@ public enum ErrorCode {
     UNAUTHENTICATED("AUTH_001", "Tên đăng nhập hoặc mật khẩu không chính xác", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED("AUTH_002", "Bạn không có quyền thực hiện thao tác này", HttpStatus.FORBIDDEN),
     INVALID_DATE_RANGE("SYS_002", "Ngày kết thúc phải sau ngày bắt đầu", HttpStatus.BAD_REQUEST),
+    INVALID_TIME_RANGE("SYS_003", "Giờ kết thúc phải sau giờ bắt đầu", HttpStatus.BAD_REQUEST),
 
     // 2. Tuyến xe (Route)
     ROUTE_NOT_FOUND("ROUTE_404", "Không tìm thấy tuyến xe", HttpStatus.NOT_FOUND),
     INVALID_ROUTE_DISTANCE("ROUTE_001", "Khoảng cách tuyến xe không được nhỏ hơn 0", HttpStatus.BAD_REQUEST),
+    ROUTE_ALREADY_EXISTS("ROUTE_002", "Số tuyến đã tồn tại trên hệ thống", HttpStatus.BAD_REQUEST),
 
     // 3. Xe buýt (Bus)
     BUS_NOT_FOUND("BUS_404", "Không tìm thấy xe", HttpStatus.NOT_FOUND),
@@ -36,8 +38,10 @@ public enum ErrorCode {
     NODE_NOT_FOUND("NODE_404", "Không tìm thấy nốt xe", HttpStatus.NOT_FOUND),
     SHIFT_NOT_FOUND("SHIFT_404", "Không tìm thấy ca chạy", HttpStatus.NOT_FOUND),
     SHIFT_ALREADY_COMPLETED("SHIFT_001", "Ca chạy đã hoàn thành, không thể thay đổi", HttpStatus.BAD_REQUEST),
-    INVALID_SHIFT_DATE("SHIFT_002", "Ngày thực hiện ca chạy không khớp với lịch trình", HttpStatus.BAD_REQUEST);
-
+    INVALID_SHIFT_DATE("SHIFT_002", "Ngày thực hiện ca chạy không khớp với lịch trình", HttpStatus.BAD_REQUEST),
+    SHIFT_TIME_OUT_OF_ROUTE_RANGE("SHIFT_003", "Giờ ca chạy nằm ngoài khung giờ hoạt động của tuyến",
+            HttpStatus.BAD_REQUEST),
+    NODE_ALREADY_EXISTS("NODE_001", "Nốt xe này đã tồn tại cho tuyến và ngày này", HttpStatus.BAD_REQUEST);
 
     private final String code;
     private final String message;

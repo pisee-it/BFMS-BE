@@ -9,6 +9,8 @@ import com.bfms.bfms_backend.mapper.BusShiftMapper;
 import jakarta.transaction.Transactional;
 import com.bfms.bfms_backend.repository.*;
 import com.bfms.bfms_backend.service.BusShiftService;
+import com.bfms.bfms_backend.exception.AppException;
+import com.bfms.bfms_backend.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -29,13 +31,24 @@ public class BusShiftServiceImpl implements BusShiftService {
 
     private final com.bfms.bfms_backend.util.EntityLookupHelper lookupHelper;
 
-
     @Override
     @Transactional
     public BusShift createBusShift(Integer nodeId, BusShiftRequest request) {
         Node node = lookupHelper.getNode(nodeId);
         Bus bus = lookupHelper.getBus(request.busId());
         AppUser driver = lookupHelper.getUser(request.driverId());
+        Route route = node.getRoute();
+
+        // 1. Kiểm tra thứ tự thời gian
+        if (request.plannedArrivalTime().isBefore(request.plannedDepartureTime())) {
+            throw new AppException(ErrorCode.INVALID_TIME_RANGE);
+        }
+
+        // 2. Kiểm tra khung giờ hoạt động của tuyến
+        if (request.plannedDepartureTime().isBefore(route.getOperationStart()) ||
+                request.plannedArrivalTime().isAfter(route.getOperationEnd())) {
+            throw new AppException(ErrorCode.SHIFT_TIME_OUT_OF_ROUTE_RANGE);
+        }
 
         BusShift shift = busShiftMapper.toEntity(request);
         shift.setNode(node);
@@ -44,7 +57,6 @@ public class BusShiftServiceImpl implements BusShiftService {
 
         return busShiftRepository.save(shift);
     }
-
 
     @Override
     public List<BusShiftResponse> getActiveShiftsByRoute(Integer routeId) {
@@ -60,13 +72,12 @@ public class BusShiftServiceImpl implements BusShiftService {
         BusShift shift = lookupHelper.getBusShift(shiftId);
 
         if (!LocalDate.now().equals(shift.getNode().getExecutionDate())) {
-            throw new com.bfms.bfms_backend.exception.AppException(com.bfms.bfms_backend.exception.ErrorCode.INVALID_SHIFT_DATE);
+            throw new AppException(ErrorCode.INVALID_SHIFT_DATE);
         }
 
         if (shift.getStatus() == ShiftStatus.COMPLETED) {
-            throw new com.bfms.bfms_backend.exception.AppException(com.bfms.bfms_backend.exception.ErrorCode.SHIFT_ALREADY_COMPLETED);
+            throw new AppException(ErrorCode.SHIFT_ALREADY_COMPLETED);
         }
-
 
         BigDecimal singlePrice = shift.getNode().getRoute().getPrice();
         BigDecimal revenue = singlePrice.multiply(BigDecimal.valueOf(request.total_single_tickets()));

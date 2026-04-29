@@ -41,11 +41,15 @@ public class BusServiceImpl implements BusService {
     @Override
     @Transactional
     public BusResponse createBus(BusRequest request) {
+        if (busRepository.findByLicensePlate(request.licensePlate()).isPresent()) {
+            throw new AppException(ErrorCode.BUS_ALREADY_EXISTS);
+        }
+
         Route route = lookupHelper.getRoute(request.routeId());
 
         Bus bus = busMapper.toEntity(request);
         bus.setRoute(route);
-        
+
         return busMapper.toResponse(busRepository.save(bus));
     }
 
@@ -54,11 +58,18 @@ public class BusServiceImpl implements BusService {
     @Transactional
     public BusResponse updateBus(Integer id, BusRequest request) {
         Bus bus = lookupHelper.getBus(id);
+
+        if (!bus.getLicensePlate().equals(request.licensePlate())) {
+            if (busRepository.findByLicensePlate(request.licensePlate()).isPresent()) {
+                throw new AppException(ErrorCode.BUS_ALREADY_EXISTS);
+            }
+        }
+
         Route route = lookupHelper.getRoute(request.routeId());
 
         busMapper.updateEntity(request, bus);
         bus.setRoute(route);
-        
+
         return busMapper.toResponse(busRepository.save(bus));
     }
 
