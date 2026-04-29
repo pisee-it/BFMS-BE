@@ -26,47 +26,66 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
 
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT;
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Dữ liệu đầu vào không hợp lệ",
+                errorCode.getStatus().value(),
+                errorCode.getCode(),
+                errorCode.getMessage(),
                 errors);
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorResponse, errorCode.getStatus());
     }
 
-    // 2. Xử lý lỗi logic nghiệp vụ (RuntimeException được throw từ Service)
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeExceptions(RuntimeException ex) {
+    // 2. Xử lý lỗi nghiệp vụ tùy chỉnh (AppException)
+    @ExceptionHandler(AppException.class)
+    public ResponseEntity<ErrorResponse> handleAppException(AppException ex) {
+        ErrorCode errorCode = ex.getErrorCode();
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                ex.getMessage());
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+                errorCode.getStatus().value(),
+                errorCode.getCode(),
+                errorCode.getMessage());
+        return new ResponseEntity<>(errorResponse, errorCode.getStatus());
     }
 
     // 3. Xử lý lỗi xác thực (Sai username/password)
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex) {
+        ErrorCode errorCode = ErrorCode.UNAUTHENTICATED;
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                "Tên đăng nhập hoặc mật khẩu không chính xác");
-        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+                errorCode.getStatus().value(),
+                errorCode.getCode(),
+                errorCode.getMessage());
+        return new ResponseEntity<>(errorResponse, errorCode.getStatus());
     }
 
     // 4. Xử lý lỗi phân quyền (Spring Security)
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
+        ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.FORBIDDEN.value(),
-                "Bạn không có quyền thực hiện thao tác này");
-        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+                errorCode.getStatus().value(),
+                errorCode.getCode(),
+                errorCode.getMessage());
+        return new ResponseEntity<>(errorResponse, errorCode.getStatus());
     }
 
-    // 5. Xử lý tất cả các lỗi khác (Lỗi server không xác định)
+    // 5. Xử lý lỗi Runtime chung (Nếu chưa được map sang AppException)
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponse> handleRuntimeExceptions(RuntimeException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "RUNTIME_ERROR",
+                ex.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    // 6. Xử lý tất cả các lỗi khác (Lỗi server không xác định)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAllExceptions(Exception ex) {
-        // Log lỗi ở đây nếu cần thiết
+        ErrorCode errorCode = ErrorCode.UNCATEGORIZED_EXCEPTION;
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Đã xảy ra lỗi hệ thống, vui lòng thử lại sau");
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+                errorCode.getStatus().value(),
+                errorCode.getCode(),
+                errorCode.getMessage());
+        return new ResponseEntity<>(errorResponse, errorCode.getStatus());
     }
 }

@@ -6,6 +6,8 @@ import com.bfms.bfms_backend.repository.ReportRepository;
 import com.bfms.bfms_backend.repository.RouteRepository;
 import com.bfms.bfms_backend.service.EconomyReportService;
 import com.bfms.bfms_backend.service.ReportService;
+import com.bfms.bfms_backend.exception.AppException;
+import com.bfms.bfms_backend.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -29,7 +31,7 @@ public class ReportServiceImpl implements ReportService {
     @Transactional
     public RouteReportResponse getRouteReport(Integer routeId, LocalDate startDate, LocalDate endDate) {
         Route route = routeRepository.findById(routeId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tuyến xe với ID: " + routeId));
+                .orElseThrow(() -> new AppException(ErrorCode.ROUTE_NOT_FOUND));
 
         // Đảm bảo dữ liệu được đồng bộ trong khoảng thời gian yêu cầu
         for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
@@ -45,8 +47,7 @@ public class ReportServiceImpl implements ReportService {
                     route.getStopA() + " - " + route.getStopB(),
                     route.getRouteNumber(),
                     BigDecimal.ZERO, BigDecimal.ZERO, 0, BigDecimal.ZERO, BigDecimal.ZERO,
-                    startDate, endDate
-            );
+                    startDate, endDate);
         }
 
         // Mapping index từ Query trong ReportRepository:
@@ -65,8 +66,7 @@ public class ReportServiceImpl implements ReportService {
                 (BigDecimal) result[3],
                 (BigDecimal) result[4],
                 startDate,
-                endDate
-        );
+                endDate);
     }
 
     @Override
@@ -95,7 +95,7 @@ public class ReportServiceImpl implements ReportService {
             Row titleRow = sheet.createRow(0);
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("BÁO CÁO DOANH THU TUYẾN XE: " + data.routeName());
-            
+
             // Thông tin tuyến
             Row infoRow1 = sheet.createRow(2);
             infoRow1.createCell(0).setCellValue("Số hiệu tuyến:");
@@ -106,7 +106,7 @@ public class ReportServiceImpl implements ReportService {
             infoRow2.createCell(1).setCellValue(startDate.toString() + " đến " + endDate.toString());
 
             // Header bảng
-            String[] headers = {"Hạng mục", "Giá trị"};
+            String[] headers = { "Hạng mục", "Giá trị" };
             Row headerRow = sheet.createRow(5);
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
@@ -120,7 +120,7 @@ public class ReportServiceImpl implements ReportService {
             addRow(sheet, rowIdx++, "Doanh thu quảng cáo", data.totalAdRevenue(), currencyStyle);
             addRow(sheet, rowIdx++, "Tổng lượt khách", data.totalPassengers(), null);
             addRow(sheet, rowIdx++, "Thuế khấu trừ", data.taxDeduction(), currencyStyle);
-            
+
             Row profitRow = sheet.createRow(rowIdx);
             profitRow.createCell(0).setCellValue("LỢI NHUẬN RÒNG");
             Cell profitCell = profitRow.createCell(1);
@@ -133,7 +133,7 @@ public class ReportServiceImpl implements ReportService {
             workbook.write(out);
             return out.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi khi xuất file Excel", e);
+            throw new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION);
         }
     }
 

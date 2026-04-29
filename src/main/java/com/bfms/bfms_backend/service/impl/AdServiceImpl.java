@@ -11,6 +11,8 @@ import com.bfms.bfms_backend.repository.*;
 import com.bfms.bfms_backend.service.AdService;
 import com.bfms.bfms_backend.service.NotificationService;
 import org.springframework.stereotype.Service;
+import com.bfms.bfms_backend.exception.AppException;
+import com.bfms.bfms_backend.exception.ErrorCode;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -49,7 +51,7 @@ public class AdServiceImpl implements AdService {
     public AdCompanyResponse createCompany(AdCompanyRequest request) {
         // Kiểm tra xem mã số thuế đã tồn tại chưa
         if (adCompanyRepository.findByTaxCode(request.taxCode()).isPresent()) {
-            throw new RuntimeException("Mã số thuế này đã tồn tại trong hệ thống.");
+            throw new AppException(ErrorCode.AD_COMPANY_ALREADY_EXISTS);
         }
 
         AdCompany company = new AdCompany();
@@ -65,13 +67,13 @@ public class AdServiceImpl implements AdService {
     @Transactional
     public AdContractResponse createContract(AdContractRequest request) {
         AdCompany company = adCompanyRepository.findById(request.companyId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy công ty quảng cáo."));
+                .orElseThrow(() -> new AppException(ErrorCode.AD_COMPANY_NOT_FOUND));
 
         Route route = routeRepository.findById(request.routeId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tuyến xe."));
+                .orElseThrow(() -> new AppException(ErrorCode.ROUTE_NOT_FOUND));
 
         if (request.endDate().isBefore(request.startDate())) {
-            throw new RuntimeException("Ngày kết thúc hợp đồng phải sau ngày bắt đầu.");
+            throw new AppException(ErrorCode.INVALID_DATE_RANGE);
         }
 
         AdContract contract = new AdContract();
@@ -92,7 +94,7 @@ public class AdServiceImpl implements AdService {
     @Transactional
     public AdContractResponse approveContract(Integer contractId) {
         AdContract contract = adContractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng quảng cáo."));
+                .orElseThrow(() -> new AppException(ErrorCode.AD_CONTRACT_NOT_FOUND));
 
         contract.setApprovalStatus(AdContractStatus.APPROVED);
         AdContract saved = adContractRepository.save(contract);
@@ -113,25 +115,25 @@ public class AdServiceImpl implements AdService {
     @Transactional
     public AdAssignmentResponse assignAdToBus(AdAssignmentRequest request) {
         AdContract contract = adContractRepository.findById(request.adContractId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng quảng cáo."));
+                .orElseThrow(() -> new AppException(ErrorCode.AD_CONTRACT_NOT_FOUND));
 
         if (contract.getApprovalStatus() != AdContractStatus.APPROVED
                 && contract.getApprovalStatus() != AdContractStatus.PAID) {
-            throw new RuntimeException("Hợp đồng chưa được phê duyệt hoặc thanh toán, không thể gán quảng cáo.");
+            throw new AppException(ErrorCode.AD_CONTRACT_NOT_APPROVED);
         }
 
         Bus bus = busRepository.findById(request.busId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy xe buýt."));
+                .orElseThrow(() -> new AppException(ErrorCode.BUS_NOT_FOUND));
 
         // US-05: Chỉ chọn xe chưa dán quảng cáo (is_advertised = false)
         if (Boolean.TRUE.equals(bus.getIsAdvertised())) {
-            throw new RuntimeException("Xe này đã được dán quảng cáo, không thể phân bổ thêm.");
+            throw new AppException(ErrorCode.BUS_ALREADY_ADVERTISED);
         }
 
         // Kiểm tra xem số lượng xe đã gán có vượt quá hợp đồng không
         List<AdAssignment> currentAssignments = adAssignmentRepository.findByAdContractId(request.adContractId());
         if (currentAssignments.size() >= contract.getBusQuantity()) {
-            throw new RuntimeException("Số lượng xe được gán đã đạt giới hạn của hợp đồng.");
+            throw new AppException(ErrorCode.AD_CONTRACT_LIMIT_REACHED);
         }
 
         AdAssignment assignment = new AdAssignment();
@@ -151,7 +153,7 @@ public class AdServiceImpl implements AdService {
     @Transactional
     public AdContractResponse requestDeleteContract(Integer contractId) {
         AdContract contract = adContractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng quảng cáo."));
+                .orElseThrow(() -> new AppException(ErrorCode.AD_CONTRACT_NOT_FOUND));
 
         // Chỉ cho phép yêu cầu xóa nếu hợp đồng không ở trạng thái DELETE_REQUESTED
         // hoặc đã bị REJECTED
@@ -164,7 +166,7 @@ public class AdServiceImpl implements AdService {
     @Transactional
     public void deleteContract(Integer contractId) {
         AdContract contract = adContractRepository.findById(contractId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hợp đồng quảng cáo."));
+                .orElseThrow(() -> new AppException(ErrorCode.AD_CONTRACT_NOT_FOUND));
 
         // Logic bổ sung: Khi xóa hợp đồng, cần gỡ các quảng cáo đang dán trên xe
         List<AdAssignment> assignments = adAssignmentRepository.findByAdContractId(contractId);

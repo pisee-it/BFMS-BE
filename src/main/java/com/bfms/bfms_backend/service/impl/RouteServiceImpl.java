@@ -6,6 +6,8 @@ import com.bfms.bfms_backend.entity.Route;
 import jakarta.transaction.Transactional;
 import com.bfms.bfms_backend.repository.RouteRepository;
 import com.bfms.bfms_backend.service.RouteService;
+import com.bfms.bfms_backend.exception.AppException;
+import com.bfms.bfms_backend.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -33,7 +35,7 @@ public class RouteServiceImpl implements RouteService {
     public RouteResponse getRouteById(Integer id) {
         // Tìm kiếm theo ID, ném ngoại lệ nếu không tồn tại
         Route route = routeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tuyến xe với ID: " + id));
+                .orElseThrow(() -> new AppException(ErrorCode.ROUTE_NOT_FOUND));
         return mapToResponse(route);
     }
 
@@ -58,7 +60,7 @@ public class RouteServiceImpl implements RouteService {
     public RouteResponse updateRoute(Integer id, RouteRequest request) {
         // Kiểm tra sự tồn tại của bản ghi trước khi cập nhật
         Route route = routeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tuyến xe để cập nhật"));
+                .orElseThrow(() -> new AppException(ErrorCode.ROUTE_NOT_FOUND));
 
         // Cập nhật các trường dữ liệu mới
         mapRequestToEntity(route, request);
@@ -70,7 +72,7 @@ public class RouteServiceImpl implements RouteService {
     public void deleteRoute(Integer id) {
         // Xóa cứng bản ghi (Lưu ý: Thực tế nên cân nhắc kiểm tra ràng buộc FK với bảng BUS/NODE)
         if (!routeRepository.existsById(id)) {
-            throw new RuntimeException("Không tìm thấy tuyến xe để xóa");
+            throw new AppException(ErrorCode.ROUTE_NOT_FOUND);
         }
 
         // 2. Kiểm tra xem có Xe (Bus) nào đang thuộc tuyến này không
@@ -103,7 +105,7 @@ public class RouteServiceImpl implements RouteService {
 
     private void validateRouteDistances(BigDecimal ab, BigDecimal ba) {
         if (ab.compareTo(BigDecimal.ZERO) < 0 || ba.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Khoảng cách không được nhỏ hơn 0");
+            throw new AppException(ErrorCode.INVALID_ROUTE_DISTANCE);
         }
     }
 

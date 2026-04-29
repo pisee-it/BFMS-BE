@@ -8,6 +8,8 @@ import com.bfms.bfms_backend.service.NotificationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import com.bfms.bfms_backend.exception.AppException;
+import com.bfms.bfms_backend.exception.ErrorCode;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -27,7 +29,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     public void notify(Integer userId, String message) {
         AppUser user = appUserRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng để gửi thông báo."));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         Notification notification = new Notification();
         notification.setUser(user);
@@ -47,7 +49,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     public void markAsRead(Integer notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông báo."));
+                .orElseThrow(() -> new AppException(ErrorCode.NOTIFICATION_NOT_FOUND));
         notification.setIsRead(true);
         notificationRepository.save(notification);
     }

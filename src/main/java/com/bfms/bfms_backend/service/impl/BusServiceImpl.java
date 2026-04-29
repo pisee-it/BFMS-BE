@@ -8,6 +8,8 @@ import com.bfms.bfms_backend.entity.Route;
 import com.bfms.bfms_backend.repository.BusRepository;
 import com.bfms.bfms_backend.repository.RouteRepository;
 import com.bfms.bfms_backend.service.BusService;
+import com.bfms.bfms_backend.exception.AppException;
+import com.bfms.bfms_backend.exception.ErrorCode;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +40,7 @@ public class BusServiceImpl implements BusService {
     public BusResponse createBus(BusRequest request) {
         // Tìm kiếm Route để gán cho Bus mới
         Route route = routeRepository.findById(request.routeId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tuyến xe ID: " + request.routeId()));
+                .orElseThrow(() -> new AppException(ErrorCode.ROUTE_NOT_FOUND));
 
         // Khởi tạo và lưu thực thể Bus
         Bus bus = new Bus();
@@ -51,11 +53,11 @@ public class BusServiceImpl implements BusService {
     public BusResponse updateBus(Integer id, BusRequest request) {
         // Kiểm tra xe có tồn tại trong hệ thống hay không
         Bus bus = busRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy xe ID: " + id));
+                .orElseThrow(() -> new AppException(ErrorCode.BUS_NOT_FOUND));
 
         // Cập nhật Route mới nếu có thay đổi routeId
         Route route = routeRepository.findById(request.routeId())
-                .orElseThrow(() -> new RuntimeException("Tuyến xe mới không hợp lệ"));
+                .orElseThrow(() -> new AppException(ErrorCode.ROUTE_NOT_FOUND));
 
         mapRequestToEntity(bus, request, route);
         return mapToResponse(busRepository.save(bus));
@@ -66,7 +68,7 @@ public class BusServiceImpl implements BusService {
     public void deleteBus(Integer id) {
         // Xóa cứng thông tin xe (Lưu ý: Sẽ lỗi nếu đã có dữ liệu trong BUS_SHIFT)
         if (!busRepository.existsById(id)) {
-            throw new RuntimeException("Xe không tồn tại");
+            throw new AppException(ErrorCode.BUS_NOT_FOUND);
         }
 
         // KIỂM TRA RÀNG BUỘC: Nếu xe đã có dữ liệu trong bảng BUS_SHIFT
@@ -83,7 +85,7 @@ public class BusServiceImpl implements BusService {
     public void sellBus(Integer id) {
         // Tìm xe
         Bus bus = busRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy xe để thực hiện giao dịch bán."));
+                .orElseThrow(() -> new AppException(ErrorCode.BUS_NOT_FOUND));
 
         // 2. Kiểm tra xem xe có đang trong ca chạy (BUS_SHIFT) nào chưa hoàn thành không
         // (Lưu ý: Bạn nên viết thêm hàm kiểm tra status của SHIFT là 'PENDING' hoặc 'RUNNING')
