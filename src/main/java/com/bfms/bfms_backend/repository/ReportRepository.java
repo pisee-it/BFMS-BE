@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -39,4 +40,8 @@ public interface ReportRepository extends JpaRepository<EconomyReport, Integer> 
            "WHERE er.reportDate BETWEEN :startDate AND :endDate")
     Object[] getTotalSystemSummary(@Param("startDate") LocalDate startDate, 
                                    @Param("endDate") LocalDate endDate);
+
+    List<EconomyReport> findAllByReportDateBetween(LocalDate startDate, LocalDate endDate);
+
+    List<EconomyReport> findAllByRouteIdAndReportDateBetween(Integer routeId, LocalDate startDate, LocalDate endDate);
 }

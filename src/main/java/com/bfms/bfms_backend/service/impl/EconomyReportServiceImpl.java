@@ -11,8 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -45,10 +45,8 @@ public class EconomyReportServiceImpl implements EconomyReportService {
             }
         }
 
-        // Đồng bộ dữ liệu báo cáo cho khoảng thời gian yêu cầu
-        for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
-            syncEconomyReports(d);
-        }
+        // Đồng bộ dữ liệu báo cáo cho khoảng thời gian yêu cầu (Tối ưu: Chỉ gọi 1 lần cho cả dải ngày)
+        syncEconomyReports(startDate, endDate);
 
         // Lấy dữ liệu tổng hợp
         Object[] result = reportRepository.getTotalSystemSummary(startDate, endDate);
@@ -60,12 +58,6 @@ public class EconomyReportServiceImpl implements EconomyReportService {
             );
         }
 
-        // Mapping index từ Query trong ReportRepository:
-        // 0: SUM(totalTicketRevenue)
-        // 1: SUM(totalAdRevenue)
-        // 2: SUM(taxDeduction)
-        // 3: SUM(netProfit)
-        // 4: SUM(totalPassengers)
         return new RevenueResponse(
             (BigDecimal) result[0],
             (BigDecimal) result[1],
@@ -79,41 +71,112 @@ public class EconomyReportServiceImpl implements EconomyReportService {
 
     @Override
     @Transactional
-    public void syncEconomyReports(LocalDate date) {
+    public void syncEconomyReports(LocalDate startDate, LocalDate endDate) {
         List<Route> routes = routeRepository.findAll();
-        
-        // Trạng thái hợp đồng quảng cáo được tính vào doanh thu
         List<AdContractStatus> validAdStatuses = Arrays.asList(AdContractStatus.APPROVED, AdContractStatus.PAID);
 
-        for (Route route : routes) {
-            // 1. Lấy dữ liệu vé
-            DailyTicketStat stat = dailyTicketStatRepository.findByRouteIdAndReportDate(route.getId(), date)
-                    .orElse(null);
-            
+        // Bulk fetch dữ liệu cho toàn bộ dải ngày để tránh N+1
+        List<DailyTicketStat> allStats = dailyTicketStatRepository.findAllByReportDateBetween(startDate, endDate);
+        List<AdContract> allContracts = adContractRepository.findAllByStartDateBetweenAndApprovalStatusIn(startDate, endDate, validAdStatuses);
+        List<OperationalCost> allCosts = operationalCostRepository.findAllByCostDateBetween(startDate, endDate);
+        List<EconomyReport> allReports = reportRepository.findAllByReportDateBetween(startDate, endDate);
+
+        // Sử dụng Map để truy xuất nhanh O(1) trong vòng lặp
+        Map<String, DailyTicketStat> statMap = allStats.stream()
+                .collect(Collectors.toMap(s -> s.getRoute().getId() + "_" + s.getReportDate(), s -> s, (a, b) -> a));
+        
+        Map<String, List<AdContract>> contractMap = allContracts.stream()
+                .filter(c -> c.getRoute() != null)
+                .collect(Collectors.groupingBy(c -> c.getRoute().getId() + "_" + c.getStartDate()));
+                
+        Map<String, List<OperationalCost>> costMap = allCosts.stream()
+                .collect(Collectors.groupingBy(c -> c.getRoute().getId() + "_" + c.getCostDate()));
+                
+        Map<String, EconomyReport> reportMap = allReports.stream()
+                .collect(Collectors.toMap(r -> r.getRoute().getId() + "_" + r.getReportDate(), r -> r, (a, b) -> a));
+
+        List<EconomyReport> reportsToSave = new ArrayList<>();
+
+        for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
+            for (Route route : routes) {
+                String key = route.getId() + "_" + d;
+                
+                DailyTicketStat stat = statMap.get(key);
+                BigDecimal ticketRevenue = (stat != null) ? stat.getRevenueSingleTickets() : BigDecimal.ZERO;
+                Integer totalPassengers = (stat != null) ? stat.getTotalPassengers() : 0;
+
+                List<AdContract> contracts = contractMap.getOrDefault(key, Collections.emptyList());
+                BigDecimal adRevenue = contracts.stream()
+                        .map(c -> c.getPricePerBus().multiply(BigDecimal.valueOf(c.getBusQuantity())))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                List<OperationalCost> costs = costMap.getOrDefault(key, Collections.emptyList());
+
+                // 5. Tính toán và lưu báo cáo
+                // Chi tiết công thức tại EconomyReport.calculateReport():
+                // - Vé xe buýt: Thuế GTGT 0% (vận tải công cộng)
+                // - Quảng cáo: Thuế GTGT 10% (dịch vụ thương mại) -> Net = Gross / 1.1
+                // - Thuế TNDN: 20% tính trên lợi nhuận sau khi trừ chi phí (chỉ tính khi có lãi)
+                EconomyReport report = reportMap.getOrDefault(key, new EconomyReport());
+                report.setRoute(route);
+                report.setReportDate(d);
+                report.calculateReport(ticketRevenue, adRevenue, totalPassengers, costs);
+                reportsToSave.add(report);
+            }
+        }
+        reportRepository.saveAll(reportsToSave);
+    }
+
+    @Override
+    @Transactional
+    public void syncEconomyReports(Integer routeId, LocalDate startDate, LocalDate endDate) {
+        Route route = routeRepository.findById(routeId).orElse(null);
+        if (route == null) return;
+
+        List<AdContractStatus> validAdStatuses = Arrays.asList(AdContractStatus.APPROVED, AdContractStatus.PAID);
+
+        // Bulk fetch chỉ cho routeId cụ thể
+        List<DailyTicketStat> allStats = dailyTicketStatRepository.findAllByRouteIdAndReportDateBetween(routeId, startDate, endDate);
+        List<AdContract> allContracts = adContractRepository.findAllByStartDateBetweenAndApprovalStatusIn(startDate, endDate, validAdStatuses);
+        List<OperationalCost> allCosts = operationalCostRepository.findAllByRouteIdAndCostDateBetween(routeId, startDate, endDate);
+        List<EconomyReport> allReports = reportRepository.findAllByRouteIdAndReportDateBetween(routeId, startDate, endDate);
+
+        Map<LocalDate, DailyTicketStat> statMap = allStats.stream()
+                .collect(Collectors.toMap(DailyTicketStat::getReportDate, s -> s, (a, b) -> a));
+        
+        Map<LocalDate, List<AdContract>> contractMap = allContracts.stream()
+                .filter(c -> c.getRoute() != null && c.getRoute().getId().equals(routeId))
+                .collect(Collectors.groupingBy(AdContract::getStartDate));
+                
+        Map<LocalDate, List<OperationalCost>> costMap = allCosts.stream()
+                .collect(Collectors.groupingBy(OperationalCost::getCostDate));
+                
+        Map<LocalDate, EconomyReport> reportMap = allReports.stream()
+                .collect(Collectors.toMap(EconomyReport::getReportDate, r -> r, (a, b) -> a));
+
+        List<EconomyReport> reportsToSave = new ArrayList<>();
+
+        for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
+            DailyTicketStat stat = statMap.get(d);
             BigDecimal ticketRevenue = (stat != null) ? stat.getRevenueSingleTickets() : BigDecimal.ZERO;
             Integer totalPassengers = (stat != null) ? stat.getTotalPassengers() : 0;
 
-            // 2. Lấy dữ liệu quảng cáo (Chỉ tính vào ngày startDate của hợp đồng)
-            List<AdContract> contracts = adContractRepository.findAllByStartDateAndApprovalStatusIn(date, validAdStatuses);
-            
+            List<AdContract> contracts = contractMap.getOrDefault(d, Collections.emptyList());
             BigDecimal adRevenue = contracts.stream()
-                    .filter(c -> c.getRoute() != null && c.getRoute().getId().equals(route.getId()))
                     .map(c -> c.getPricePerBus().multiply(BigDecimal.valueOf(c.getBusQuantity())))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            // 3. Lấy chi phí vận hành
-            List<OperationalCost> costs = operationalCostRepository.findByRouteIdAndCostDate(route.getId(), date);
+            List<OperationalCost> costs = costMap.getOrDefault(d, Collections.emptyList());
 
-            // 4. Tìm hoặc tạo EconomyReport
-            EconomyReport report = reportRepository.findByRouteIdAndReportDate(route.getId(), date)
-                    .orElse(new EconomyReport());
-            
+            // 5. Tính toán báo cáo cho tuyến đơn lẻ
+            // Formula: Net Profit = (Ticket + AdNet) - Costs - TaxTNDN
+            // Trong đó TaxTNDN = 20% * (Ticket + AdNet - Costs)
+            EconomyReport report = reportMap.getOrDefault(d, new EconomyReport());
             report.setRoute(route);
-            report.setReportDate(date);
-            
-            // 5. Tính toán và lưu
+            report.setReportDate(d);
             report.calculateReport(ticketRevenue, adRevenue, totalPassengers, costs);
-            reportRepository.save(report);
+            reportsToSave.add(report);
         }
+        reportRepository.saveAll(reportsToSave);
     }
 }

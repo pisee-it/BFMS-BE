@@ -10,4 +10,8 @@ import java.util.List;
 @Repository
 public interface OperationalCostRepository extends JpaRepository<OperationalCost, Integer> {
     List<OperationalCost> findByRouteIdAndCostDate(Integer routeId, LocalDate costDate);
+
+    List<OperationalCost> findAllByCostDateBetween(LocalDate startDate, LocalDate endDate);
+
+    List<OperationalCost> findAllByRouteIdAndCostDateBetween(Integer routeId, LocalDate startDate, LocalDate endDate);
 }

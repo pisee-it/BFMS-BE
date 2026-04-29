@@ -33,10 +33,8 @@ public class ReportServiceImpl implements ReportService {
         Route route = routeRepository.findById(routeId)
                 .orElseThrow(() -> new AppException(ErrorCode.ROUTE_NOT_FOUND));
 
-        // Đảm bảo dữ liệu được đồng bộ trong khoảng thời gian yêu cầu
-        for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
-            economyReportService.syncEconomyReports(d);
-        }
+        // Đảm bảo dữ liệu được đồng bộ trong khoảng thời gian yêu cầu (Tối ưu: Gọi bulk sync cho routeId cụ thể)
+        economyReportService.syncEconomyReports(routeId, startDate, endDate);
 
         // Lấy dữ liệu tổng hợp từ Repository
         Object[] result = reportRepository.getSummaryByRouteAndDateRange(routeId, startDate, endDate);
@@ -114,12 +112,12 @@ public class ReportServiceImpl implements ReportService {
                 cell.setCellStyle(headerStyle);
             }
 
-            // Dữ liệu
+            // Dữ liệu chi tiết (đã được khấu trừ thuế & chi phí tại EconomyReport)
             int rowIdx = 6;
-            addRow(sheet, rowIdx++, "Doanh thu vé", data.totalTicketRevenue(), currencyStyle);
-            addRow(sheet, rowIdx++, "Doanh thu quảng cáo", data.totalAdRevenue(), currencyStyle);
+            addRow(sheet, rowIdx++, "Doanh thu vé (VAT 0%)", data.totalTicketRevenue(), currencyStyle);
+            addRow(sheet, rowIdx++, "Doanh thu quảng cáo (Sau thuế 10%)", data.totalAdRevenue(), currencyStyle);
             addRow(sheet, rowIdx++, "Tổng lượt khách", data.totalPassengers(), null);
-            addRow(sheet, rowIdx++, "Thuế khấu trừ", data.taxDeduction(), currencyStyle);
+            addRow(sheet, rowIdx++, "Thuế khấu trừ (VAT + TNDN 20%)", data.taxDeduction(), currencyStyle);
 
             Row profitRow = sheet.createRow(rowIdx);
             profitRow.createCell(0).setCellValue("LỢI NHUẬN RÒNG");

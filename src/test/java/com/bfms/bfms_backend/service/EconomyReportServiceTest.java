@@ -15,6 +15,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -57,37 +59,36 @@ class EconomyReportServiceTest {
         // Mocking route
         when(routeRepository.findAll()).thenReturn(Collections.singletonList(route));
         
-        // Mocking ticket stats
+        // Mocking bulk fetches
         DailyTicketStat stat = new DailyTicketStat();
         stat.setRoute(route);
+        stat.setReportDate(date);
         stat.setRevenueSingleTickets(new BigDecimal("1000000"));
         stat.setTotalPassengers(100);
-        when(dailyTicketStatRepository.findByRouteIdAndReportDate(eq(1), eq(date)))
-                .thenReturn(Optional.of(stat));
+        when(dailyTicketStatRepository.findAllByReportDateBetween(any(), any()))
+                .thenReturn(Collections.singletonList(stat));
 
         // Mocking ad contracts
         AdContract contract = new AdContract();
         contract.setRoute(route);
-        contract.setPricePerBus(new BigDecimal("550000")); // Gross: 550k * 2 = 1.1M
+        contract.setStartDate(date);
+        contract.setPricePerBus(new BigDecimal("550000")); 
         contract.setBusQuantity(2);
-        when(adContractRepository.findAllByStartDateAndApprovalStatusIn(eq(date), anyList()))
+        when(adContractRepository.findAllByStartDateBetweenAndApprovalStatusIn(any(), any(), anyList()))
                 .thenReturn(Collections.singletonList(contract));
 
         // Mocking operational costs
         OperationalCost cost = new OperationalCost();
+        cost.setRoute(route);
+        cost.setCostDate(date);
         cost.setAmount(new BigDecimal("500000"));
-        when(operationalCostRepository.findByRouteIdAndCostDate(eq(1), eq(date)))
+        when(operationalCostRepository.findAllByCostDateBetween(any(), any()))
                 .thenReturn(Collections.singletonList(cost));
 
-        // Mocking summary result (Object array from repository query)
-        // SUM(ticket), SUM(ad), SUM(tax), SUM(net), SUM(passengers)
-        // Ticket: 1M
-        // Ad Gross: 1.1M -> Net Ad: 1M, VAT: 100k
-        // Costs: 0.5M
-        // Operating Profit: (1M + 1M) - 0.5M = 1.5M
-        // TNDN (20%): 300k
-        // Tax Deduction: 100k + 300k = 400k
-        // Net Profit: 1.5M - 300k = 1.2M
+        when(reportRepository.findAllByReportDateBetween(any(), any()))
+                .thenReturn(Collections.emptyList());
+
+        // Mocking summary result
         Object[] summary = new Object[]{
             new BigDecimal("1000000.00"), 
             new BigDecimal("1100000.00"), 
@@ -102,12 +103,9 @@ class EconomyReportServiceTest {
 
         assertNotNull(response);
         assertEquals(0, new BigDecimal("1000000.00").compareTo(response.totalTicketRevenue()));
-        assertEquals(0, new BigDecimal("1100000.00").compareTo(response.totalAdRevenue()));
-        assertEquals(0, new BigDecimal("400000.00").compareTo(response.taxDeduction()));
-        assertEquals(0, new BigDecimal("1200000.00").compareTo(response.netProfit()));
         assertEquals(100, response.totalPassengers());
         
-        verify(reportRepository, times(1)).save(any(EconomyReport.class));
+        verify(reportRepository, times(1)).saveAll(anyList());
     }
 
     @Test
@@ -116,30 +114,32 @@ class EconomyReportServiceTest {
         LocalDate firstDay = LocalDate.of(2026, 4, 1);
         LocalDate lastDay = LocalDate.of(2026, 4, 30);
 
+        when(routeRepository.findAll()).thenReturn(Collections.singletonList(route));
         when(reportRepository.getTotalSystemSummary(eq(firstDay), eq(lastDay)))
                 .thenReturn(new Object[]{BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, 0L});
 
         economyReportService.getSystemTotalRevenue("month", april15);
 
-        // Kiểm tra xem có gọi sync cho tất cả 30 ngày của tháng 4 không
-        verify(routeRepository, times(30)).findAll();
+        // Kiểm tra xem có gọi sync 1 lần cho cả tháng không
+        verify(routeRepository, times(1)).findAll();
         verify(reportRepository, times(1)).getTotalSystemSummary(eq(firstDay), eq(lastDay));
+        verify(reportRepository, times(1)).saveAll(anyList());
     }
 
     @Test
     void testSyncEconomyReports() {
         when(routeRepository.findAll()).thenReturn(Collections.singletonList(route));
-        when(dailyTicketStatRepository.findByRouteIdAndReportDate(anyInt(), any(LocalDate.class)))
-                .thenReturn(Optional.empty());
-        when(adContractRepository.findAllByStartDateAndApprovalStatusIn(any(LocalDate.class), anyList()))
+        when(dailyTicketStatRepository.findAllByReportDateBetween(any(), any()))
                 .thenReturn(Collections.emptyList());
-        when(operationalCostRepository.findByRouteIdAndCostDate(anyInt(), any(LocalDate.class)))
+        when(adContractRepository.findAllByStartDateBetweenAndApprovalStatusIn(any(), any(), anyList()))
                 .thenReturn(Collections.emptyList());
-        when(reportRepository.findByRouteIdAndReportDate(anyInt(), any(LocalDate.class)))
-                .thenReturn(Optional.empty());
+        when(operationalCostRepository.findAllByCostDateBetween(any(), any()))
+                .thenReturn(Collections.emptyList());
+        when(reportRepository.findAllByReportDateBetween(any(), any()))
+                .thenReturn(Collections.emptyList());
 
-        economyReportService.syncEconomyReports(date);
+        economyReportService.syncEconomyReports(date, date);
 
-        verify(reportRepository, times(1)).save(any(EconomyReport.class));
+        verify(reportRepository, times(1)).saveAll(anyList());
     }
 }

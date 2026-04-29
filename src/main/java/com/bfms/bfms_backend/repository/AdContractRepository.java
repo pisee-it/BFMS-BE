@@ -12,4 +12,6 @@ import java.util.List;
 @Repository
 public interface AdContractRepository extends JpaRepository<AdContract, Integer> {
     List<AdContract> findAllByStartDateAndApprovalStatusIn(LocalDate startDate, List<AdContractStatus> statuses);
+
+    List<AdContract> findAllByStartDateBetweenAndApprovalStatusIn(LocalDate startDate, LocalDate endDate, List<AdContractStatus> statuses);
 }

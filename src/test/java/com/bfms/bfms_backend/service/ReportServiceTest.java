@@ -72,20 +72,11 @@ class ReportServiceTest {
         assertEquals(0, new BigDecimal("1000000").compareTo(response.totalTicketRevenue()));
         assertEquals(100, response.totalPassengers());
         
-        verify(economyReportService, atLeastOnce()).syncEconomyReports(any(LocalDate.class));
+        verify(economyReportService, atLeastOnce()).syncEconomyReports(eq(1), any(LocalDate.class), any(LocalDate.class));
     }
 
     @Test
     void testGetRouteReport_NetProfitFormulaValidation() {
-        // Giả sử dữ liệu không có chi phí vận hành (costs = 0)
-        // Ticket = 1.000.000
-        // Ad Gross = 1.100.000 -> Net Ad = 1.000.000, VAT = 100.000
-        // Operating Profit = 2.000.000
-        // TNDN (20%) = 400.000
-        // Tax Deduction = 100.000 (VAT) + 400.000 (TNDN) = 500.000
-        // Net Profit = 2.000.000 - 400.000 = 1.600.000
-        // Kiểm tra công thức: 1.000.000 (Ticket) + 1.100.000 (Ad Gross) - 500.000 (Tax) = 1.600.000 (Net Profit) -> ĐÚNG
-        
         when(routeRepository.findById(1)).thenReturn(Optional.of(route));
         
         Object[] summary = new Object[]{
@@ -108,17 +99,14 @@ class ReportServiceTest {
     }
 
     @Test
-    void testGetRouteReport_CallsSyncForEachDay() {
+    void testGetRouteReport_CallsSyncOnceForDateRange() {
         when(routeRepository.findById(1)).thenReturn(Optional.of(route));
         when(reportRepository.getSummaryByRouteAndDateRange(anyInt(), any(), any())).thenReturn(new Object[5]);
 
-        LocalDate start = LocalDate.of(2026, 4, 1);
-        LocalDate end = LocalDate.of(2026, 4, 3); // 3 ngày
-        
-        reportService.getRouteReport(1, start, end);
+        reportService.getRouteReport(1, startDate, endDate);
 
-        // Phải gọi sync 3 lần cho 2026-04-01, 02, 03
-        verify(economyReportService, times(3)).syncEconomyReports(any(LocalDate.class));
+        // Phải gọi sync 1 lần cho cả dải ngày
+        verify(economyReportService, times(1)).syncEconomyReports(eq(1), any(LocalDate.class), any(LocalDate.class));
     }
 
     @Test
