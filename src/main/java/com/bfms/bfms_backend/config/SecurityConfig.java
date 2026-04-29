@@ -13,25 +13,35 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import com.bfms.bfms_backend.security.JwtFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
     private final JwtFilter jwtFilter;
+    private final SecurityProperties securityProperties;
 
-    public SecurityConfig(JwtFilter jwtFilter) {
+    public SecurityConfig(JwtFilter jwtFilter, SecurityProperties securityProperties) {
         this.jwtFilter = jwtFilter;
+        this.securityProperties = securityProperties;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Kích hoạt CORS
                 .csrf(csrf -> csrf.disable()) // 1. Disable CSRF vì dùng JWT (Stateless)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**").permitAll() // 2. Mở cửa cho API Login
-                        .anyRequest().authenticated() // 3. Các API khác (US-01, US-02...) phải có Token
-                )
+                .authorizeHttpRequests(auth -> {
+                    // 2. Mở cửa cho các API được cấu hình trong application.yaml
+                    String[] permitAllPatterns = securityProperties.getPermitAllPatterns().toArray(new String[0]);
+                    auth.requestMatchers(permitAllPatterns).permitAll();
+                    auth.anyRequest().authenticated(); // 3. Các API khác phải có Token
+                })
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 4. Không dùng Session
                 )
@@ -39,6 +49,20 @@ public class SecurityConfig {
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        SecurityProperties.CorsProperties corsProps = securityProperties.getCors();
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(corsProps.getAllowedOrigins());
+        configuration.setAllowedMethods(corsProps.getAllowedMethods());
+        configuration.setAllowedHeaders(corsProps.getAllowedHeaders());
+        configuration.setAllowCredentials(corsProps.isAllowCredentials());
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     @Bean

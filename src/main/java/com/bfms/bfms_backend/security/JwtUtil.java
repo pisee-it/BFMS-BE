@@ -4,9 +4,10 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+
+import com.bfms.bfms_backend.config.SecurityProperties;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -15,21 +16,23 @@ import java.util.function.Function;
 
 @Component
 public class JwtUtil {
-    private final String secretKey;
-    private final long expirationTime;
+    private final SecurityProperties securityProperties;
 
-    // 1. Constructor Injection cho các giá trị từ application.yml
-    public JwtUtil(
-            @Value("${application.security.jwt.secret-key}") String secretKey,
-            @Value("${application.security.jwt.expiration}") long expirationTime
-    ) {
-        this.secretKey = secretKey;
-        this.expirationTime = expirationTime;
+    public JwtUtil(SecurityProperties securityProperties) {
+        this.securityProperties = securityProperties;
+    }
+
+    private String getSecretKey() {
+        return securityProperties.getJwt().getSecretKey();
+    }
+
+    private long getExpirationTime() {
+        return securityProperties.getJwt().getExpiration();
     }
 
     // 2. Tạo SecretKey từ chuỗi cấu hình
     private SecretKey getSigningKey() {
-        byte[] keyBytes = this.secretKey.getBytes(StandardCharsets.UTF_8);
+        byte[] keyBytes = getSecretKey().getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -67,7 +70,7 @@ public class JwtUtil {
         return Jwts.builder()
                 .setSubject(username)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
+                .setExpiration(new Date(System.currentTimeMillis() + getExpirationTime()))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
