@@ -12,6 +12,7 @@ import com.bfms.bfms_backend.service.BusShiftService;
 import com.bfms.bfms_backend.exception.AppException;
 import com.bfms.bfms_backend.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BusShiftServiceImpl implements BusShiftService {
 
     private final BusShiftRepository busShiftRepository;
@@ -55,6 +57,8 @@ public class BusShiftServiceImpl implements BusShiftService {
         shift.setBus(bus);
         shift.setDriver(driver);
 
+        log.info("Đã tạo mới ca chạy cho xe: {}, tài xế: {}, tại nốt: {}", bus.getLicensePlate(), driver.getFullName(),
+                node.getId());
         return busShiftRepository.save(shift);
     }
 
@@ -69,6 +73,8 @@ public class BusShiftServiceImpl implements BusShiftService {
     @Override
     @Transactional
     public ShiftResponse completeShift(Integer shiftId, CompleteShiftRequest request) {
+        log.info("Bắt đầu hoàn thành ca chạy ID: {}. Dữ liệu: single={}, monthly={}", shiftId,
+                request.total_single_tickets(), request.total_monthly_tickets());
         BusShift shift = lookupHelper.getBusShift(shiftId);
 
         if (!LocalDate.now().equals(shift.getNode().getExecutionDate())) {
@@ -109,6 +115,7 @@ public class BusShiftServiceImpl implements BusShiftService {
         stat.addTickets(request.total_single_tickets(), request.total_monthly_tickets());
         dailyTicketStatRepository.save(stat);
 
+        log.info("Hoàn thành ca chạy ID: {} thành công. Doanh thu: {}", shiftId, revenue);
         return busShiftMapper.toShiftResponse(busShiftRepository.save(shift));
     }
 

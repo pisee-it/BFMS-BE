@@ -10,11 +10,13 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import lombok.extern.slf4j.Slf4j;
 import java.util.HashMap;
 import java.util.Map;
 import com.bfms.bfms_backend.service.AuditService;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
     private final AuditService auditService;
 
@@ -80,6 +82,7 @@ public class GlobalExceptionHandler {
     // 5. Xử lý lỗi Runtime chung (Nếu chưa được map sang AppException)
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeExceptions(RuntimeException ex) {
+        log.error("Lỗi Runtime không mong muốn: ", ex);
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 "RUNTIME_ERROR",
@@ -90,6 +93,7 @@ public class GlobalExceptionHandler {
     // 6. Xử lý tất cả các lỗi khác (Lỗi server không xác định)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAllExceptions(Exception ex) {
+        log.error("Lỗi Server hệ thống: ", ex);
         ErrorCode errorCode = ErrorCode.UNCATEGORIZED_EXCEPTION;
         ErrorResponse errorResponse = new ErrorResponse(
                 errorCode.getStatus().value(),

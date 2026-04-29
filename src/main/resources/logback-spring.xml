@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Cấu hình màu sắc cho Console -->
+    <property name="CONSOLE_LOG_PATTERN" value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"/>
+    
+    <!-- Cấu hình định dạng log cho File -->
+    <property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${PID:- } --- [%t] %-40.40logger{39} : %m%n%wEx"/>
+
+    <include src="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- Appender ghi ra Console -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Appender ghi ra File với cơ chế Rolling -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/bfms-app.log</file>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- Xoay vòng hàng ngày và nén lại -->
+            <fileNamePattern>logs/archived/bfms-app.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <!-- Mỗi file tối đa 10MB -->
+            <maxFileSize>10MB</maxFileSize>
+            <!-- Lưu tối đa 30 ngày -->
+            <maxHistory>30</maxHistory>
+            <!-- Tổng dung lượng tối đa 2GB -->
+            <totalSizeCap>2GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- Cấu hình Logger cho project -->
+    <logger name="com.bfms.bfms_backend" level="DEBUG" />
+    
+    <!-- Cấu hình Logger cho Spring & Hibernate -->
+    <logger name="org.springframework.web" level="INFO" />
+    <logger name="org.hibernate.SQL" level="DEBUG" />
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+
+</configuration>

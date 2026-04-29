@@ -21,7 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class AdServiceImpl implements AdService {
 
     private final AdCompanyRepository adCompanyRepository;
@@ -61,6 +64,7 @@ public class AdServiceImpl implements AdService {
         AdCompany company = adMapper.toCompanyEntity(request);
         AdCompany saved = adCompanyRepository.save(company);
 
+        log.info("Đã tạo mới công ty quảng cáo: {} (MST: {})", saved.getName(), saved.getTaxCode());
         auditService.log("CREATE_AD_COMPANY", "Tạo mới công ty quảng cáo: " + saved.getName());
 
         return adMapper.toCompanyResponse(saved);
@@ -82,6 +86,8 @@ public class AdServiceImpl implements AdService {
         contract.setApprovalStatus(AdContractStatus.PENDING);
 
         AdContract saved = adContractRepository.save(contract);
+        log.info("Đã tạo mới hợp đồng quảng cáo ID: {} cho công ty: {}. Số xe đăng ký: {}", saved.getId(),
+                company.getName(), saved.getBusQuantity());
         auditService.log("CREATE_AD_CONTRACT",
                 "Tạo mới hợp đồng quảng cáo ID: " + saved.getId() + " cho đối tác: " + company.getName());
         return adMapper.toContractResponse(saved);
