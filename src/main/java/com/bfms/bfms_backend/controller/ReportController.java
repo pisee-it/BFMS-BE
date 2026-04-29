@@ -2,6 +2,8 @@ package com.bfms.bfms_backend.controller;
 
 import com.bfms.bfms_backend.dtos.res.RouteReportResponse;
 import com.bfms.bfms_backend.service.ReportService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
@@ -19,12 +21,14 @@ import java.time.temporal.TemporalAdjusters;
 @RestController
 @RequestMapping("/api/v1/reports")
 @RequiredArgsConstructor
+@Tag(name = "Báo cáo (Reports)", description = "Các API xuất báo cáo tài chính chi tiết theo tuyến (Excel/JSON)")
 public class ReportController {
 
     private final ReportService reportService;
 
     @GetMapping("/export")
     @PreAuthorize("hasRole('OWNER')")
+    @Operation(summary = "Xuất báo cáo doanh thu tuyến (US-11)", description = "Lấy báo cáo chi tiết cho một tuyến xe trong khoảng thời gian. Hỗ trợ định dạng JSON hoặc EXCEL. Quyền: OWNER")
     public ResponseEntity<?> exportReport(
             @RequestParam Integer routeId,
             @RequestParam(defaultValue = "json") String format,

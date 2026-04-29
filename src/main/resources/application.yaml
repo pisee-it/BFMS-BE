@@ -26,6 +26,16 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  
+  # 4. Cấu hình SpringDoc OpenAPI
+  springdoc:
+    swagger-ui:
+      path: /swagger-ui.html
+      operations-sorter: alpha
+      tags-sorter: alpha
+    api-docs:
+      path: /v3/api-docs
+    show-actuator: true
 
 application:
   security:
@@ -36,6 +46,9 @@ application:
         expiration: ${JWT_REFRESH_EXPIRATION}
     permit-all-patterns:
       - "/api/v1/auth/**"
+      - "/v3/api-docs/**"
+      - "/swagger-ui/**"
+      - "/swagger-ui.html"
     cors:
       allowed-origins:
         - "http://localhost:4200"
