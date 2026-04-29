@@ -7,6 +7,7 @@ import com.bfms.bfms_backend.dtos.res.AdAssignmentResponse;
 import com.bfms.bfms_backend.dtos.res.AdCompanyResponse;
 import com.bfms.bfms_backend.dtos.res.AdContractResponse;
 import com.bfms.bfms_backend.entity.*;
+import com.bfms.bfms_backend.mapper.AdMapper;
 import com.bfms.bfms_backend.repository.*;
 import com.bfms.bfms_backend.service.AdService;
 import com.bfms.bfms_backend.service.NotificationService;
@@ -15,7 +16,6 @@ import com.bfms.bfms_backend.exception.AppException;
 import com.bfms.bfms_backend.exception.ErrorCode;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,6 +29,7 @@ public class AdServiceImpl implements AdService {
     private final RouteRepository routeRepository;
     private final NotificationService notificationService;
     private final AppUserRepository appUserRepository;
+    private final AdMapper adMapper;
 
     public AdServiceImpl(AdCompanyRepository adCompanyRepository,
             AdContractRepository adContractRepository,
@@ -36,7 +37,8 @@ public class AdServiceImpl implements AdService {
             BusRepository busRepository,
             RouteRepository routeRepository,
             NotificationService notificationService,
-            AppUserRepository appUserRepository) {
+            AppUserRepository appUserRepository,
+            AdMapper adMapper) {
         this.adCompanyRepository = adCompanyRepository;
         this.adContractRepository = adContractRepository;
         this.adAssignmentRepository = adAssignmentRepository;
@@ -44,23 +46,19 @@ public class AdServiceImpl implements AdService {
         this.routeRepository = routeRepository;
         this.notificationService = notificationService;
         this.appUserRepository = appUserRepository;
+        this.adMapper = adMapper;
     }
 
     @Override
     @Transactional
     public AdCompanyResponse createCompany(AdCompanyRequest request) {
-        // Kiểm tra xem mã số thuế đã tồn tại chưa
         if (adCompanyRepository.findByTaxCode(request.taxCode()).isPresent()) {
             throw new AppException(ErrorCode.AD_COMPANY_ALREADY_EXISTS);
         }
 
-        AdCompany company = new AdCompany();
-        company.setName(request.name());
-        company.setTaxCode(request.taxCode());
-        company.setContact(request.contact());
-
+        AdCompany company = adMapper.toCompanyEntity(request);
         AdCompany saved = adCompanyRepository.save(company);
-        return mapToCompanyResponse(saved);
+        return adMapper.toCompanyResponse(saved);
     }
 
     @Override
@@ -76,18 +74,13 @@ public class AdServiceImpl implements AdService {
             throw new AppException(ErrorCode.INVALID_DATE_RANGE);
         }
 
-        AdContract contract = new AdContract();
+        AdContract contract = adMapper.toContractEntity(request);
         contract.setCompany(company);
         contract.setRoute(route);
-        contract.setStartDate(request.startDate());
-        contract.setEndDate(request.endDate());
-        contract.setPricePerBus(request.pricePerBus());
-        contract.setBusQuantity(request.busQuantity());
-        contract.setContractFileUrl(request.contractFileUrl());
         contract.setApprovalStatus(AdContractStatus.PENDING);
 
         AdContract saved = adContractRepository.save(contract);
-        return mapToContractResponse(saved);
+        return adMapper.toContractResponse(saved);
     }
 
     @Override
@@ -99,7 +92,6 @@ public class AdServiceImpl implements AdService {
         contract.setApprovalStatus(AdContractStatus.APPROVED);
         AdContract saved = adContractRepository.save(contract);
 
-        // Gửi thông báo cho tất cả Admin
         List<AppUser> admins = appUserRepository.findByRole(Role.ADMIN);
         String message = String.format("Hợp đồng quảng cáo #%d (%s) đã được phê duyệt bởi Kế toán.",
                 saved.getId(), saved.getCompany().getName());
@@ -108,7 +100,7 @@ public class AdServiceImpl implements AdService {
             notificationService.notify(admin.getId(), message);
         }
 
-        return mapToContractResponse(saved);
+        return adMapper.toContractResponse(saved);
     }
 
     @Override
@@ -125,28 +117,25 @@ public class AdServiceImpl implements AdService {
         Bus bus = busRepository.findById(request.busId())
                 .orElseThrow(() -> new AppException(ErrorCode.BUS_NOT_FOUND));
 
-        // US-05: Chỉ chọn xe chưa dán quảng cáo (is_advertised = false)
         if (Boolean.TRUE.equals(bus.getIsAdvertised())) {
             throw new AppException(ErrorCode.BUS_ALREADY_ADVERTISED);
         }
 
-        // Kiểm tra xem số lượng xe đã gán có vượt quá hợp đồng không
         List<AdAssignment> currentAssignments = adAssignmentRepository.findByAdContractId(request.adContractId());
         if (currentAssignments.size() >= contract.getBusQuantity()) {
             throw new AppException(ErrorCode.AD_CONTRACT_LIMIT_REACHED);
         }
 
-        AdAssignment assignment = new AdAssignment();
+        AdAssignment assignment = adMapper.toAssignmentEntity(request);
         assignment.setAdContract(contract);
         assignment.setBus(bus);
         assignment.setStatus(AdAssignmentStatus.ACTIVE);
 
-        // Cập nhật trạng thái xe
         bus.setIsAdvertised(true);
         busRepository.save(bus);
 
         AdAssignment saved = adAssignmentRepository.save(assignment);
-        return mapToAssignmentResponse(saved);
+        return adMapper.toAssignmentResponse(saved);
     }
 
     @Override
@@ -155,11 +144,9 @@ public class AdServiceImpl implements AdService {
         AdContract contract = adContractRepository.findById(contractId)
                 .orElseThrow(() -> new AppException(ErrorCode.AD_CONTRACT_NOT_FOUND));
 
-        // Chỉ cho phép yêu cầu xóa nếu hợp đồng không ở trạng thái DELETE_REQUESTED
-        // hoặc đã bị REJECTED
         contract.setApprovalStatus(AdContractStatus.DELETE_REQUESTED);
         AdContract saved = adContractRepository.save(contract);
-        return mapToContractResponse(saved);
+        return adMapper.toContractResponse(saved);
     }
 
     @Override
@@ -168,11 +155,10 @@ public class AdServiceImpl implements AdService {
         AdContract contract = adContractRepository.findById(contractId)
                 .orElseThrow(() -> new AppException(ErrorCode.AD_CONTRACT_NOT_FOUND));
 
-        // Logic bổ sung: Khi xóa hợp đồng, cần gỡ các quảng cáo đang dán trên xe
         List<AdAssignment> assignments = adAssignmentRepository.findByAdContractId(contractId);
         for (AdAssignment assignment : assignments) {
             Bus bus = assignment.getBus();
-            bus.setIsAdvertised(false); // Có thể cần logic phức tạp hơn nếu một xe có nhiều hợp đồng (tương lai)
+            bus.setIsAdvertised(false);
             busRepository.save(bus);
             adAssignmentRepository.delete(assignment);
         }
@@ -183,51 +169,14 @@ public class AdServiceImpl implements AdService {
     @Override
     public List<AdCompanyResponse> getAllCompanies() {
         return adCompanyRepository.findAll().stream()
-                .map(this::mapToCompanyResponse)
+                .map(adMapper::toCompanyResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<AdContractResponse> getAllContracts() {
         return adContractRepository.findAll().stream()
-                .map(this::mapToContractResponse)
+                .map(adMapper::toContractResponse)
                 .collect(Collectors.toList());
-    }
-
-    private AdCompanyResponse mapToCompanyResponse(AdCompany company) {
-        return new AdCompanyResponse(
-                company.getId(),
-                company.getName(),
-                company.getTaxCode(),
-                company.getContact());
-    }
-
-    private AdContractResponse mapToContractResponse(AdContract contract) {
-        return new AdContractResponse(
-                contract.getId(),
-                contract.getCompany().getId(),
-                contract.getCompany().getName(),
-                contract.getRoute().getId(),
-                contract.getRoute().getRouteNumber(),
-                contract.getStartDate(),
-                contract.getEndDate(),
-                contract.getPricePerBus(),
-                contract.getBusQuantity(),
-                contract.getApprovalStatus(),
-                contract.getContractFileUrl(),
-                contract.getCreatedAt());
-    }
-
-    private AdAssignmentResponse mapToAssignmentResponse(AdAssignment assignment) {
-        boolean needsAttention = assignment.getAdContract().getEndDate().isBefore(LocalDate.now())
-                && assignment.getStatus() == AdAssignmentStatus.ACTIVE;
-
-        return new AdAssignmentResponse(
-                assignment.getId(),
-                assignment.getAdContract().getId(),
-                assignment.getBus().getId(),
-                assignment.getBus().getLicensePlate(),
-                assignment.getStatus(),
-                needsAttention);
     }
 }
