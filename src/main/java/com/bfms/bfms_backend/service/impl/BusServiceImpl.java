@@ -33,7 +33,7 @@ public class BusServiceImpl implements BusService {
     @Override
     @Transactional
     public List<BusResponse> getAllBuses() {
-        return busRepository.findAll().stream()
+        return busRepository.findBy().stream()
                 .map(busMapper::toResponse)
                 .collect(Collectors.toList());
     }

@@ -60,7 +60,7 @@ public class BusShiftServiceImpl implements BusShiftService {
 
     @Override
     public List<BusShiftResponse> getActiveShiftsByRoute(Integer routeId) {
-        return busShiftRepository.findActiveShifts(routeId, ShiftStatus.IN_PROGRESS)
+        return busShiftRepository.findActiveShiftsProjectedBy(routeId, ShiftStatus.IN_PROGRESS)
                 .stream()
                 .map(busShiftMapper::toBusShiftResponse)
                 .collect(Collectors.toList());

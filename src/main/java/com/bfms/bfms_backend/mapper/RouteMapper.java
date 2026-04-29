@@ -3,6 +3,7 @@ package com.bfms.bfms_backend.mapper;
 import com.bfms.bfms_backend.dtos.req.RouteRequest;
 import com.bfms.bfms_backend.dtos.res.RouteResponse;
 import com.bfms.bfms_backend.entity.Route;
+import com.bfms.bfms_backend.repository.projection.RouteProjection;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -11,6 +12,8 @@ import org.mapstruct.MappingTarget;
 public interface RouteMapper {
 
     RouteResponse toResponse(Route route);
+
+    RouteResponse toResponse(RouteProjection projection);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "buses", ignore = true)

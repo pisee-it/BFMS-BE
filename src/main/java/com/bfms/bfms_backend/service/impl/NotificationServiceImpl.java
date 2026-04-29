@@ -4,6 +4,7 @@ import com.bfms.bfms_backend.entity.AppUser;
 import com.bfms.bfms_backend.entity.Notification;
 import com.bfms.bfms_backend.repository.AppUserRepository;
 import com.bfms.bfms_backend.repository.NotificationRepository;
+import com.bfms.bfms_backend.repository.projection.NotificationProjection;
 import com.bfms.bfms_backend.service.NotificationService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -49,8 +50,8 @@ public class NotificationServiceImpl implements NotificationService {
 
 
     @Override
-    public Page<Notification> getNotificationsForUser(Integer userId, Pageable pageable) {
-        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+    public Page<NotificationProjection> getNotificationsForUser(Integer userId, Pageable pageable) {
+        return notificationRepository.findAllByUserIdOrderByCreatedAtDesc(userId, pageable);
     }
 
     @Override

@@ -3,11 +3,13 @@ package com.bfms.bfms_backend.mapper;
 import com.bfms.bfms_backend.dtos.res.BusShiftResponse;
 import com.bfms.bfms_backend.dtos.res.ShiftResponse;
 import com.bfms.bfms_backend.entity.BusShift;
+import com.bfms.bfms_backend.repository.projection.BusShiftProjection;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface BusShiftMapper {
+    BusShiftResponse toBusShiftResponse(BusShiftProjection projection);
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "node", ignore = true)
     @Mapping(target = "bus", ignore = true)

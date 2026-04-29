@@ -16,6 +16,12 @@ import com.bfms.bfms_backend.entity.BusShift;
 import com.bfms.bfms_backend.entity.ShiftStatus;
 import com.bfms.bfms_backend.repository.BusShiftRepository;
 import com.bfms.bfms_backend.service.impl.BusShiftServiceImpl;
+import com.bfms.bfms_backend.mapper.BusShiftMapper;
+import com.bfms.bfms_backend.repository.projection.BusShiftProjection;
+import com.bfms.bfms_backend.util.EntityLookupHelper;
+import com.bfms.bfms_backend.repository.DailyTicketStatRepository;
+import com.bfms.bfms_backend.repository.TicketRepository;
+import com.bfms.bfms_backend.repository.NodeRepository;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -28,6 +34,21 @@ class BusShiftServiceImplTest {
 
     @Mock
     private BusShiftRepository busShiftRepository;
+
+    @Mock
+    private DailyTicketStatRepository dailyTicketStatRepository;
+
+    @Mock
+    private TicketRepository ticketRepository;
+
+    @Mock
+    private NodeRepository nodeRepository;
+
+    @Mock
+    private BusShiftMapper busShiftMapper;
+
+    @Mock
+    private EntityLookupHelper lookupHelper;
 
     @InjectMocks
     private BusShiftServiceImpl busShiftService;
@@ -63,8 +84,13 @@ class BusShiftServiceImplTest {
     @Test
     void getActiveShiftsByRoute_ShouldReturnOnlyInProgressShifts() {
         // 2. Giả lập Repository trả về danh sách có status IN_PROGRESS
-        when(busShiftRepository.findActiveShifts(ROUTE_ID, ShiftStatus.IN_PROGRESS))
-                .thenReturn(List.of(mockShift));
+        BusShiftProjection mockProjection = mock(BusShiftProjection.class);
+        when(busShiftRepository.findActiveShiftsProjectedBy(ROUTE_ID, ShiftStatus.IN_PROGRESS))
+                .thenReturn(List.of(mockProjection));
+
+        when(busShiftMapper.toBusShiftResponse(any(BusShiftProjection.class)))
+                .thenReturn(new BusShiftResponse(100, "29B-12345", "Nguyen Van A", 1, LocalTime.of(8, 0),
+                        ShiftStatus.IN_PROGRESS, (short) 1));
 
         // 3. Gọi service
         List<BusShiftResponse> responses = busShiftService.getActiveShiftsByRoute(ROUTE_ID);
@@ -75,20 +101,20 @@ class BusShiftServiceImplTest {
         assertEquals("IN_PROGRESS", responses.get(0).status().toString());
 
         // 5. Xác minh Repository được gọi đúng 1 lần với đúng tham số
-        verify(busShiftRepository, times(1)).findActiveShifts(ROUTE_ID, ShiftStatus.IN_PROGRESS);
+        verify(busShiftRepository, times(1)).findActiveShiftsProjectedBy(ROUTE_ID, ShiftStatus.IN_PROGRESS);
     }
 
     @Test
     void getActiveShiftsByRoute_ShouldFilterCorrectRouteId() {
         // 6. Test với một Route ID khác để đảm bảo filter hoạt động
         Integer differentRouteId = 99;
-        when(busShiftRepository.findActiveShifts(differentRouteId, ShiftStatus.IN_PROGRESS))
+        when(busShiftRepository.findActiveShiftsProjectedBy(differentRouteId, ShiftStatus.IN_PROGRESS))
                 .thenReturn(List.of());
 
         List<BusShiftResponse> responses = busShiftService.getActiveShiftsByRoute(differentRouteId);
 
         // 7. Kết quả phải trống nếu Repository không tìm thấy nốt nào thuộc Route 99
         assertTrue(responses.isEmpty());
-        verify(busShiftRepository).findActiveShifts(differentRouteId, ShiftStatus.IN_PROGRESS);
+        verify(busShiftRepository).findActiveShiftsProjectedBy(differentRouteId, ShiftStatus.IN_PROGRESS);
     }
 }

@@ -9,8 +9,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.bfms.bfms_backend.dtos.req.RouteRequest;
 import com.bfms.bfms_backend.dtos.res.RouteResponse;
 import com.bfms.bfms_backend.entity.Route;
+import com.bfms.bfms_backend.mapper.RouteMapper;
 import com.bfms.bfms_backend.repository.RouteRepository;
 import com.bfms.bfms_backend.service.impl.RouteServiceImpl;
+import com.bfms.bfms_backend.util.EntityLookupHelper;
+import com.bfms.bfms_backend.exception.AppException;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
@@ -25,6 +28,12 @@ class RouteServiceImplTest {
     @Mock
     private RouteRepository routeRepository;
 
+    @Mock
+    private RouteMapper routeMapper;
+
+    @Mock
+    private EntityLookupHelper lookupHelper;
+
     @InjectMocks
     private RouteServiceImpl routeService;
 
@@ -37,10 +46,10 @@ class RouteServiceImplTest {
         // 1. Giả lập dữ liệu có khoảng cách đi âm
         RouteRequest req = createRequest(new BigDecimal("-1"), BigDecimal.TEN);
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        AppException exception = assertThrows(AppException.class, () -> {
             routeService.createRoute(req);
         });
-        assertEquals("Khoảng cách không được nhỏ hơn 0", exception.getMessage());
+        assertEquals("Khoảng cách tuyến xe không được nhỏ hơn 0", exception.getMessage());
     }
 
     @Test
@@ -48,10 +57,10 @@ class RouteServiceImplTest {
         // 2. Giả lập dữ liệu có khoảng cách về âm
         RouteRequest req = createRequest(BigDecimal.TEN, new BigDecimal("-5"));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        AppException exception = assertThrows(AppException.class, () -> {
             routeService.createRoute(req);
         });
-        assertEquals("Khoảng cách không được nhỏ hơn 0", exception.getMessage());
+        assertEquals("Khoảng cách tuyến xe không được nhỏ hơn 0", exception.getMessage());
     }
 
     // --- 2. TEST AUTOMATIC PRICING LOGIC ---
@@ -102,7 +111,13 @@ class RouteServiceImplTest {
 
     private void mockSaveOperation() {
         // 4. Trả về chính đối tượng Route sau khi đã được Service tính toán và setPrice
+        when(routeMapper.toEntity(any(RouteRequest.class))).thenReturn(new Route());
         when(routeRepository.save(any(Route.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(routeMapper.toResponse(any(Route.class))).thenAnswer(invocation -> {
+            Route r = invocation.getArgument(0);
+            return new RouteResponse(r.getId(), r.getRouteNumber(), r.getStopA(), r.getStopB(), r.getPath(),
+                    r.getDistanceAB(), r.getDistanceBA(), r.getOperationStart(), r.getOperationEnd(), r.getPrice());
+        });
     }
 
     private RouteRequest createRequest(BigDecimal distAB, BigDecimal distBA) {
