@@ -12,9 +12,15 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.Map;
+import com.bfms.bfms_backend.service.AuditService;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private final AuditService auditService;
+
+    public GlobalExceptionHandler(AuditService auditService) {
+        this.auditService = auditService;
+    }
 
     // 1. Xử lý lỗi Bean Validation (dữ liệu đầu vào không hợp lệ)
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -60,6 +66,9 @@ public class GlobalExceptionHandler {
     // 4. Xử lý lỗi phân quyền (Spring Security)
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
+        // Ghi log bảo mật khi bị từ chối truy cập
+        auditService.log("ACCESS_DENIED", "Truy cập bị từ chối: " + ex.getMessage());
+
         ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
         ErrorResponse errorResponse = new ErrorResponse(
                 errorCode.getStatus().value(),

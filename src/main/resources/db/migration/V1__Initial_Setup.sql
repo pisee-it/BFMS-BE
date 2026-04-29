@@ -193,3 +193,18 @@ CREATE INDEX idx_daily_ticket_stat_route_date ON DAILY_TICKET_STAT(route_id, rep
 
 -- Hỗ trợ tìm kiếm ca chạy theo nốt và trạng thái (US-09)
 CREATE INDEX idx_bus_shift_node_status ON BUS_SHIFT(node_id, status);
+
+-- 15. Bảng nhật ký bảo mật (Audit Log)
+CREATE TABLE SECURITY_LOG (
+    id          SERIAL PRIMARY KEY,
+    username    VARCHAR(50),
+    action      VARCHAR(50) NOT NULL,
+    description TEXT,
+    ip_address  VARCHAR(45),
+    created_at  TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+-- Index cho Audit Log
+CREATE INDEX idx_security_log_username ON SECURITY_LOG(username);
+CREATE INDEX idx_security_log_created_at ON SECURITY_LOG(created_at);
+
