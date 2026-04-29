@@ -1,5 +1,6 @@
 package com.bfms.bfms_backend.controller;
 
+import com.bfms.bfms_backend.dtos.req.RefreshTokenRequest;
 import com.bfms.bfms_backend.dtos.res.AuthResponse;
 import com.bfms.bfms_backend.dtos.req.LoginRequest;
 import org.springframework.http.ResponseEntity;
@@ -25,5 +26,10 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         // 2. Gọi service xử lý và trả về mã 200 OK kèm Token
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refreshToken(request));
     }
 }

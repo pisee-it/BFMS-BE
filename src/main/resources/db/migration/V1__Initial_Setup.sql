@@ -26,6 +26,14 @@ CREATE TABLE APP_USER (
     ))
 );
 
+-- 1.1. Bảng Refresh Token
+CREATE TABLE REFRESH_TOKEN (
+    id          SERIAL PRIMARY KEY,
+    token       VARCHAR(255) UNIQUE NOT NULL,
+    expiry_date TIMESTAMPTZ  NOT NULL,
+    user_id     INT          NOT NULL REFERENCES APP_USER(id)
+);
+
 -- 2. Bảng thông báo cho người dùng
 CREATE TABLE NOTIFICATION (
     id         SERIAL PRIMARY KEY,
