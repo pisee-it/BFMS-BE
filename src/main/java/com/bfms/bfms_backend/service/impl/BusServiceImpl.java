@@ -20,14 +20,15 @@ import java.util.stream.Collectors;
 @Service
 public class BusServiceImpl implements BusService {
     private final BusRepository busRepository;
-    private final RouteRepository routeRepository;
     private final BusMapper busMapper;
+    private final com.bfms.bfms_backend.util.EntityLookupHelper lookupHelper;
 
-    public BusServiceImpl(BusRepository busRepository, RouteRepository routeRepository, BusMapper busMapper) {
+    public BusServiceImpl(BusRepository busRepository, BusMapper busMapper, com.bfms.bfms_backend.util.EntityLookupHelper lookupHelper) {
         this.busRepository = busRepository;
-        this.routeRepository = routeRepository;
         this.busMapper = busMapper;
+        this.lookupHelper = lookupHelper;
     }
+
 
     @Override
     @Transactional
@@ -40,8 +41,7 @@ public class BusServiceImpl implements BusService {
     @Override
     @Transactional
     public BusResponse createBus(BusRequest request) {
-        Route route = routeRepository.findById(request.routeId())
-                .orElseThrow(() -> new AppException(ErrorCode.ROUTE_NOT_FOUND));
+        Route route = lookupHelper.getRoute(request.routeId());
 
         Bus bus = busMapper.toEntity(request);
         bus.setRoute(route);
@@ -49,20 +49,19 @@ public class BusServiceImpl implements BusService {
         return busMapper.toResponse(busRepository.save(bus));
     }
 
+
     @Override
     @Transactional
     public BusResponse updateBus(Integer id, BusRequest request) {
-        Bus bus = busRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.BUS_NOT_FOUND));
-
-        Route route = routeRepository.findById(request.routeId())
-                .orElseThrow(() -> new AppException(ErrorCode.ROUTE_NOT_FOUND));
+        Bus bus = lookupHelper.getBus(id);
+        Route route = lookupHelper.getRoute(request.routeId());
 
         busMapper.updateEntity(request, bus);
         bus.setRoute(route);
         
         return busMapper.toResponse(busRepository.save(bus));
     }
+
 
     @Override
     @Transactional
@@ -76,10 +75,10 @@ public class BusServiceImpl implements BusService {
     @Override
     @Transactional
     public void sellBus(Integer id) {
-        Bus bus = busRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.BUS_NOT_FOUND));
+        Bus bus = lookupHelper.getBus(id);
 
         bus.setStatus(BusStatus.SOLD);
         busRepository.save(bus);
     }
+
 }

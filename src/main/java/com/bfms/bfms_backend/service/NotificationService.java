@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface NotificationService {
     void notify(Integer userId, String message);
+    void notifyAdmins(String message);
     Page<Notification> getNotificationsForUser(Integer userId, Pageable pageable);
+
     void markAsRead(Integer notificationId);
 }

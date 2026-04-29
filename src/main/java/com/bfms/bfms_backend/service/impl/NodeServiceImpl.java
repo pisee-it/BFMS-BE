@@ -14,22 +14,19 @@ import org.springframework.stereotype.Service;
 public class NodeServiceImpl implements NodeService {
 
     private final NodeRepository nodeRepository;
-    private final RouteRepository routeRepository;
+    private final com.bfms.bfms_backend.util.EntityLookupHelper lookupHelper;
 
     @Override
     public Node createNode(Integer routeId, NodeRequest request) {
-        // 1. Kiểm tra Tuyến xe có tồn tại không
-        Route route = routeRepository.findById(routeId)
-                .orElseThrow(() -> new RuntimeException("Route not found"));
+        Route route = lookupHelper.getRoute(routeId);
 
-        // 2. Map DTO sang Entity Node
         Node node = new Node();
         node.setRoute(route);
         node.setNodeNumber(request.nodeNumber());
         node.setExecutionDate(request.executionDate());
         node.setDescription(request.description());
 
-        // 3. Lưu vào Database
         return nodeRepository.save(node);
     }
+
 }

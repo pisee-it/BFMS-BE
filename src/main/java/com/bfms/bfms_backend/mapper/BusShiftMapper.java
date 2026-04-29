@@ -8,6 +8,16 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface BusShiftMapper {
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "node", ignore = true)
+    @Mapping(target = "bus", ignore = true)
+    @Mapping(target = "driver", ignore = true)
+    @Mapping(target = "totalSingleTickets", ignore = true)
+    @Mapping(target = "totalMonthlyTickets", ignore = true)
+    @Mapping(target = "shiftRevenue", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+
+    com.bfms.bfms_backend.entity.BusShift toEntity(com.bfms.bfms_backend.dtos.req.BusShiftRequest request);
 
     @Mapping(source = "id", target = "shiftId")
     @Mapping(source = "bus.licensePlate", target = "licensePlate")

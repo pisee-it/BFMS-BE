@@ -41,6 +41,14 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @Transactional
+    public void notifyAdmins(String message) {
+        appUserRepository.findByRole(com.bfms.bfms_backend.entity.Role.ADMIN)
+                .forEach(admin -> notify(admin.getId(), message));
+    }
+
+
+    @Override
     public Page<Notification> getNotificationsForUser(Integer userId, Pageable pageable) {
         return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
     }

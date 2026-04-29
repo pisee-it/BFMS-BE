@@ -18,18 +18,18 @@ import java.time.LocalDate;
 public class TicketServiceImpl implements TicketService {
 
     private final DailyTicketStatRepository dailyTicketStatRepository;
-    private final RouteRepository routeRepository;
+    private final com.bfms.bfms_backend.util.EntityLookupHelper lookupHelper;
 
     @Override
     @Transactional(readOnly = true)
     public TicketStatisticsResponse getTicketStatistics(Integer routeId, LocalDate date) {
-        Route route = routeRepository.findById(routeId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tuyến xe với ID: " + routeId));
+        Route route = lookupHelper.getRoute(routeId);
 
         return dailyTicketStatRepository.findByRouteIdAndReportDate(routeId, date)
                 .map(stat -> mapToResponse(stat, route))
                 .orElseGet(() -> createEmptyResponse(route, date));
     }
+
 
     private TicketStatisticsResponse mapToResponse(DailyTicketStat stat, Route route) {
         return new TicketStatisticsResponse(

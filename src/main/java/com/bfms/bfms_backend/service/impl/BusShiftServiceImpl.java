@@ -22,34 +22,29 @@ import java.util.stream.Collectors;
 public class BusShiftServiceImpl implements BusShiftService {
 
     private final BusShiftRepository busShiftRepository;
-    private final NodeRepository nodeRepository;
-    private final BusRepository busRepository;
-    private final AppUserRepository userRepository;
     private final DailyTicketStatRepository dailyTicketStatRepository;
     private final TicketRepository ticketRepository;
+    private final NodeRepository nodeRepository;
     private final BusShiftMapper busShiftMapper;
 
-    @Override
-    public BusShift createBusShift(Integer nodeId, BusShiftRequest request) {
-        Node node = nodeRepository.findById(nodeId)
-                .orElseThrow(() -> new RuntimeException("Node not found"));
-        Bus bus = busRepository.findById(request.busId())
-                .orElseThrow(() -> new RuntimeException("Bus not found"));
-        AppUser driver = userRepository.findById(request.driverId())
-                .orElseThrow(() -> new RuntimeException("Driver not found"));
+    private final com.bfms.bfms_backend.util.EntityLookupHelper lookupHelper;
 
-        BusShift shift = new BusShift();
+
+    @Override
+    @Transactional
+    public BusShift createBusShift(Integer nodeId, BusShiftRequest request) {
+        Node node = lookupHelper.getNode(nodeId);
+        Bus bus = lookupHelper.getBus(request.busId());
+        AppUser driver = lookupHelper.getUser(request.driverId());
+
+        BusShift shift = busShiftMapper.toEntity(request);
         shift.setNode(node);
         shift.setBus(bus);
         shift.setDriver(driver);
-        shift.setShiftOrder(request.shiftOrder());
-        shift.setPlannedDepartureTime(request.plannedDepartureTime());
-        shift.setPlannedArrivalTime(request.plannedArrivalTime());
-        shift.setStatus(request.status());
-        shift.setDirection(request.direction());
 
         return busShiftRepository.save(shift);
     }
+
 
     @Override
     public List<BusShiftResponse> getActiveShiftsByRoute(Integer routeId) {
@@ -62,16 +57,16 @@ public class BusShiftServiceImpl implements BusShiftService {
     @Override
     @Transactional
     public ShiftResponse completeShift(Integer shiftId, CompleteShiftRequest request) {
-        BusShift shift = busShiftRepository.findById(shiftId)
-                .orElseThrow(() -> new RuntimeException("Shift not found"));
+        BusShift shift = lookupHelper.getBusShift(shiftId);
 
         if (!LocalDate.now().equals(shift.getNode().getExecutionDate())) {
-            throw new RuntimeException("Cannot complete shift: Current date does not match Node's execution date.");
+            throw new com.bfms.bfms_backend.exception.AppException(com.bfms.bfms_backend.exception.ErrorCode.INVALID_SHIFT_DATE);
         }
 
-        if (shift.getStatus() != ShiftStatus.IN_PROGRESS) {
-            throw new RuntimeException("Only shifts with 'IN_PROGRESS' status can be completed.");
+        if (shift.getStatus() == ShiftStatus.COMPLETED) {
+            throw new com.bfms.bfms_backend.exception.AppException(com.bfms.bfms_backend.exception.ErrorCode.SHIFT_ALREADY_COMPLETED);
         }
+
 
         BigDecimal singlePrice = shift.getNode().getRoute().getPrice();
         BigDecimal revenue = singlePrice.multiply(BigDecimal.valueOf(request.total_single_tickets()));

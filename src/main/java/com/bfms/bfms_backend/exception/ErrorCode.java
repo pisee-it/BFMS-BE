@@ -30,7 +30,14 @@ public enum ErrorCode {
     AD_COMPANY_ALREADY_EXISTS("AD_002", "Công ty quảng cáo này đã tồn tại (trùng mã số thuế)", HttpStatus.BAD_REQUEST),
     AD_CONTRACT_NOT_APPROVED("AD_003", "Hợp đồng chưa được phê duyệt hoặc thanh toán", HttpStatus.BAD_REQUEST),
     AD_CONTRACT_LIMIT_REACHED("AD_004", "Số lượng xe được gán đã đạt giới hạn của hợp đồng", HttpStatus.BAD_REQUEST),
-    BUS_ALREADY_ADVERTISED("AD_005", "Xe này đã có quảng cáo đang hoạt động", HttpStatus.BAD_REQUEST);
+    BUS_ALREADY_ADVERTISED("AD_005", "Xe này đã có quảng cáo đang hoạt động", HttpStatus.BAD_REQUEST),
+
+    // 6. Nốt & Ca chạy (Node & Shift)
+    NODE_NOT_FOUND("NODE_404", "Không tìm thấy nốt xe", HttpStatus.NOT_FOUND),
+    SHIFT_NOT_FOUND("SHIFT_404", "Không tìm thấy ca chạy", HttpStatus.NOT_FOUND),
+    SHIFT_ALREADY_COMPLETED("SHIFT_001", "Ca chạy đã hoàn thành, không thể thay đổi", HttpStatus.BAD_REQUEST),
+    INVALID_SHIFT_DATE("SHIFT_002", "Ngày thực hiện ca chạy không khớp với lịch trình", HttpStatus.BAD_REQUEST);
+
 
     private final String code;
     private final String message;

@@ -20,11 +20,14 @@ import java.util.stream.Collectors;
 public class RouteServiceImpl implements RouteService {
     private final RouteRepository routeRepository;
     private final RouteMapper routeMapper;
+    private final com.bfms.bfms_backend.util.EntityLookupHelper lookupHelper;
 
-    public RouteServiceImpl(RouteRepository routeRepository, RouteMapper routeMapper) {
+    public RouteServiceImpl(RouteRepository routeRepository, RouteMapper routeMapper, com.bfms.bfms_backend.util.EntityLookupHelper lookupHelper) {
         this.routeRepository = routeRepository;
         this.routeMapper = routeMapper;
+        this.lookupHelper = lookupHelper;
     }
+
 
     @Override
     public List<RouteResponse> getAllRoutes() {
@@ -35,10 +38,10 @@ public class RouteServiceImpl implements RouteService {
 
     @Override
     public RouteResponse getRouteById(Integer id) {
-        Route route = routeRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.ROUTE_NOT_FOUND));
+        Route route = lookupHelper.getRoute(id);
         return routeMapper.toResponse(route);
     }
+
 
     @Override
     @Transactional
@@ -56,12 +59,12 @@ public class RouteServiceImpl implements RouteService {
     @Override
     @Transactional
     public RouteResponse updateRoute(Integer id, RouteRequest request) {
-        Route route = routeRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.ROUTE_NOT_FOUND));
+        Route route = lookupHelper.getRoute(id);
 
         routeMapper.updateEntity(request, route);
         return routeMapper.toResponse(routeRepository.save(route));
     }
+
 
     @Override
     @Transactional
