@@ -13,6 +13,9 @@ import com.bfms.bfms_backend.security.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
+
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -36,5 +39,13 @@ public class AuthController {
     @Operation(summary = "Làm mới token", description = "Sử dụng Refresh Token để lấy Access Token mới")
     public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         return ResponseEntity.ok(authService.refreshToken(request));
+    }
+
+    @PostMapping("/logout")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Đăng xuất", description = "Hủy hiệu lực của Refresh Token và đăng xuất khỏi hệ thống")
+    public ResponseEntity<Void> logout(Principal principal) {
+        authService.logout(principal.getName());
+        return ResponseEntity.noContent().build();
     }
 }

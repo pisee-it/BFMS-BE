@@ -42,6 +42,7 @@ public class AdController {
 
     @GetMapping("/companies")
     @PreAuthorize("hasAnyRole('ADVERTISING', 'ADMIN', 'ACCOUNTANT')")
+    @Operation(summary = "Lấy danh sách công ty", description = "Trả về toàn bộ danh sách các đối tác quảng cáo. Quyền: ADVERTISING, ADMIN, ACCOUNTANT")
     public ResponseEntity<List<AdCompanyResponse>> getAllCompanies() {
         return ResponseEntity.ok(adService.getAllCompanies());
     }
@@ -58,6 +59,7 @@ public class AdController {
 
     @GetMapping("/contracts")
     @PreAuthorize("hasAnyRole('ADVERTISING', 'ADMIN', 'ACCOUNTANT', 'OWNER')")
+    @Operation(summary = "Lấy danh sách hợp đồng", description = "Trả về danh sách các hợp đồng quảng cáo. Quyền: ADVERTISING, ADMIN, ACCOUNTANT, OWNER")
     public ResponseEntity<List<AdContractResponse>> getAllContracts() {
         return ResponseEntity.ok(adService.getAllContracts());
     }
@@ -73,12 +75,14 @@ public class AdController {
     // Yêu cầu xóa hợp đồng (Accountant yêu cầu, Owner thực thi)
     @PatchMapping("/contracts/{id}/request-delete")
     @PreAuthorize("hasRole('ACCOUNTANT')")
+    @Operation(summary = "Yêu cầu xóa hợp đồng", description = "Kế toán gửi yêu cầu xóa hợp đồng cho Chủ doanh nghiệp. Quyền: ACCOUNTANT")
     public ResponseEntity<AdContractResponse> requestDeleteContract(@PathVariable Integer id) {
         return ResponseEntity.ok(adService.requestDeleteContract(id));
     }
 
     @DeleteMapping("/contracts/{id}")
     @PreAuthorize("hasRole('OWNER')")
+    @Operation(summary = "Xóa hợp đồng", description = "Chủ doanh nghiệp thực hiện xóa hợp đồng khỏi hệ thống. Quyền: OWNER")
     public ResponseEntity<Void> deleteContract(@PathVariable Integer id) {
         adService.deleteContract(id);
         return ResponseEntity.noContent().build();

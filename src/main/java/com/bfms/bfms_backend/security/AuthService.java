@@ -71,4 +71,9 @@ public class AuthService {
                 })
                 .orElseThrow(() -> new AppException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
     }
+
+    public void logout(String username) {
+        refreshTokenService.deleteByUser(username);
+        auditService.log("LOGOUT", "Người dùng " + username + " đã đăng xuất.");
+    }
 }
