@@ -19,6 +19,7 @@ BFMS streamlines operations from the field (drivers/staff) to the back office (a
 - **JWT-based Security**: Secure stateless authentication using Bearer tokens.
 - **Refresh Token Mechanism**: Extended session management with database-backed refresh tokens.
 - **Role-Based Access Control (RBAC)**: Detailed permissions for `OWNER`, `ADMIN`, `ACCOUNTANT`, `ADVERTISING`, and `STAFF`.
+- **Logout Endpoint**: Secure session termination by invalidating Refresh Tokens in the database.
 
 ### 🛣 Infrastructure Management
 - **Routes & Nodes**: Full CRUD for bus routes with auto-calculated pricing based on distance.
@@ -90,7 +91,7 @@ BFMS streamlines operations from the field (drivers/staff) to the back office (a
 Once the application is running, you can access the interactive Swagger UI at:
 `http://localhost:8080/swagger-ui.html`
 
-The API is grouped into 9 logical tags: `Authentication`, `Buses`, `Routes`, `Nodes`, `Shifts`, `Advertising`, `Notifications`, `Revenue`, and `Tickets`.
+The API is fully documented in **Vietnamese**, providing detailed descriptions for every endpoint, request body, and response structure. It is grouped into 11 logical tags: `Authentication`, `Buses`, `Routes`, `Nodes`, `Shifts`, `Advertising`, `Notifications`, `Revenue`, `Tickets`, `Files`, and `Reports`.
 
 ---
 

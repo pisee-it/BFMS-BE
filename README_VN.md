@@ -18,6 +18,7 @@ BFMS giúp số hóa quy trình từ hiện trường (nhân viên/tài xế) đ
 - **Bảo mật JWT**: Xác thực không trạng thái (stateless) qua Bearer token.
 - **Cơ chế Refresh Token**: Quản lý phiên đăng nhập dài hạn, lưu trữ an toàn trong Database.
 - **Phân quyền chi tiết**: Hỗ trợ các vai trò `OWNER` (Chủ), `ADMIN` (Quản trị), `ACCOUNTANT` (Kế toán), `ADVERTISING` (Quảng cáo), và `STAFF` (Nhân viên).
+- **Endpoint Đăng xuất**: Hủy hiệu lực phiên làm việc bằng cách xóa Refresh Token trong DB một cách an toàn.
 
 ### 🛣 Quản lý hạ tầng
 - **Tuyến xe & Nốt chạy**: Quản lý đầy đủ thông tin tuyến, tự động tính giá vé dựa trên khoảng cách.
@@ -78,9 +79,10 @@ BFMS giúp số hóa quy trình từ hiện trường (nhân viên/tài xế) đ
 ./mvnw spring-boot:run
 ```
 
-### Truy cập API
 Sau khi ứng dụng khởi động, truy cập Swagger UI tại:
 `http://localhost:8080/swagger-ui.html`
+
+Tài liệu API được **Việt hóa hoàn toàn**, mô tả chi tiết từng endpoint, cấu trúc dữ liệu đầu vào (Request) và đầu ra (Response) kèm theo ví dụ minh họa sinh động.
 
 ---
 
