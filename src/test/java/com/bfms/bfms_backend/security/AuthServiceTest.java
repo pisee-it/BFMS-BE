@@ -6,6 +6,8 @@ import com.bfms.bfms_backend.dtos.res.AuthResponse;
 import com.bfms.bfms_backend.entity.AppUser;
 import com.bfms.bfms_backend.entity.RefreshToken;
 import com.bfms.bfms_backend.entity.Role;
+import com.bfms.bfms_backend.exception.AppException;
+import com.bfms.bfms_backend.exception.ErrorCode;
 import com.bfms.bfms_backend.service.AuditService;
 import com.bfms.bfms_backend.service.RefreshTokenService;
 import org.junit.jupiter.api.BeforeEach;
@@ -119,6 +121,7 @@ class AuthServiceTest {
         when(refreshTokenService.findByToken("invalid-token")).thenReturn(Optional.empty());
 
         // 2. Execute & Verify
-        assertThrows(RuntimeException.class, () -> authService.refreshToken(new RefreshTokenRequest("invalid-token")));
+        AppException exception = assertThrows(AppException.class, () -> authService.refreshToken(new RefreshTokenRequest("invalid-token")));
+        assertEquals(ErrorCode.REFRESH_TOKEN_NOT_FOUND, exception.getErrorCode());
     }
 }

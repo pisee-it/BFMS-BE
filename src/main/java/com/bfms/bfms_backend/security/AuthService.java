@@ -5,6 +5,8 @@ import com.bfms.bfms_backend.dtos.res.AuthResponse;
 import com.bfms.bfms_backend.dtos.req.LoginRequest;
 import com.bfms.bfms_backend.service.AuditService;
 import com.bfms.bfms_backend.service.RefreshTokenService;
+import com.bfms.bfms_backend.exception.AppException;
+import com.bfms.bfms_backend.exception.ErrorCode;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -67,6 +69,6 @@ public class AuthService {
                     String role = token.getUser().getRole().name();
                     return new AuthResponse(accessToken, token.getToken(), "ROLE_" + role);
                 })
-                .orElseThrow(() -> new RuntimeException("Refresh token không tồn tại trong hệ thống."));
+                .orElseThrow(() -> new AppException(ErrorCode.REFRESH_TOKEN_NOT_FOUND));
     }
 }

@@ -4,7 +4,6 @@ import com.bfms.bfms_backend.entity.AppUser;
 import com.bfms.bfms_backend.entity.Notification;
 import com.bfms.bfms_backend.entity.Role;
 import com.bfms.bfms_backend.exception.AppException;
-import com.bfms.bfms_backend.exception.ErrorCode;
 import com.bfms.bfms_backend.repository.AppUserRepository;
 import com.bfms.bfms_backend.repository.NotificationRepository;
 import org.junit.jupiter.api.Test;
@@ -45,7 +44,7 @@ class NotificationServiceImplTest {
         // 3. Verify
         ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
         verify(notificationRepository).save(captor.capture());
-        
+
         Notification saved = captor.getValue();
         assertEquals(user, saved.getUser());
         assertEquals("Test Message", saved.getMessage());
@@ -62,10 +61,12 @@ class NotificationServiceImplTest {
     @Test
     void notifyAdmins_ShouldCallNotifyForEachAdmin() {
         // 1. Mock Admins
-        AppUser admin1 = new AppUser(); admin1.setId(101);
-        AppUser admin2 = new AppUser(); admin2.setId(102);
+        AppUser admin1 = new AppUser();
+        admin1.setId(101);
+        AppUser admin2 = new AppUser();
+        admin2.setId(102);
         when(appUserRepository.findByRole(Role.ADMIN)).thenReturn(List.of(admin1, admin2));
-        
+
         // Cần mock cả findById vì notify() gọi findById
         when(appUserRepository.findById(101)).thenReturn(Optional.of(admin1));
         when(appUserRepository.findById(102)).thenReturn(Optional.of(admin2));

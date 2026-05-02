@@ -25,6 +25,8 @@ public enum ErrorCode {
     // 4. Người dùng (User)
     USER_NOT_FOUND("USER_404", "Người dùng không tồn tại", HttpStatus.NOT_FOUND),
     NOTIFICATION_NOT_FOUND("NOTIF_404", "Không tìm thấy thông báo", HttpStatus.NOT_FOUND),
+    REFRESH_TOKEN_NOT_FOUND("AUTH_003", "Refresh token không tồn tại trong hệ thống", HttpStatus.NOT_FOUND),
+    REFRESH_TOKEN_EXPIRED("AUTH_004", "Refresh token đã hết hạn. Vui lòng đăng nhập lại", HttpStatus.UNAUTHORIZED),
 
     // 5. Hợp đồng & Quảng cáo (Ads)
     AD_CONTRACT_NOT_FOUND("AD_404", "Không tìm thấy hợp đồng quảng cáo", HttpStatus.NOT_FOUND),

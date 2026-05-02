@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bfms.bfms_backend.exception.AppException;
+import com.bfms.bfms_backend.exception.ErrorCode;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,7 +35,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Transactional
     public RefreshToken createRefreshToken(String username) {
         AppUser user = appUserRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng: " + username));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         // Xóa token cũ của user nếu có (mỗi user chỉ duy trì 1 refresh token mới nhất)
         refreshTokenRepository.deleteByUser(user);
@@ -50,7 +52,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public RefreshToken verifyExpiration(RefreshToken token) {
         if (token.getExpiryDate().isBefore(Instant.now())) {
             refreshTokenRepository.delete(token);
-            throw new RuntimeException("Refresh token đã hết hạn. Vui lòng đăng nhập lại.");
+            throw new AppException(ErrorCode.REFRESH_TOKEN_EXPIRED);
         }
         return token;
     }
@@ -64,7 +66,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Transactional
     public void deleteByUser(String username) {
         AppUser user = appUserRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng: " + username));
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         refreshTokenRepository.deleteByUser(user);
     }
 }

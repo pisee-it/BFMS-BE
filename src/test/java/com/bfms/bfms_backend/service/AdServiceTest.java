@@ -7,6 +7,8 @@ import com.bfms.bfms_backend.dtos.res.AdAssignmentResponse;
 import com.bfms.bfms_backend.dtos.res.AdCompanyResponse;
 import com.bfms.bfms_backend.dtos.res.AdContractResponse;
 import com.bfms.bfms_backend.entity.*;
+import com.bfms.bfms_backend.exception.AppException;
+import com.bfms.bfms_backend.exception.ErrorCode;
 import com.bfms.bfms_backend.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -80,8 +82,7 @@ public class AdServiceTest {
                 LocalDate.now().plusMonths(1),
                 new BigDecimal("5000000"),
                 5,
-                "http://file.pdf"
-        );
+                "http://file.pdf");
         AdContractResponse contractRes = adService.createContract(contractReq);
         assertNotNull(contractRes.id());
         assertEquals(AdContractStatus.PENDING, contractRes.approvalStatus());
@@ -106,11 +107,11 @@ public class AdServiceTest {
 
         // 6. Delete Contract
         adService.deleteContract(approvedRes.id());
-        
+
         // Verify deletion
         assertFalse(adContractRepository.existsById(approvedRes.id()));
         assertTrue(adAssignmentRepository.findByAdContractId(approvedRes.id()).isEmpty());
-        
+
         // Verify Bus state revert
         Bus busCheckFinal = busRepository.findById(busId).orElseThrow();
         assertFalse(busCheckFinal.getIsAdvertised());
@@ -120,10 +121,11 @@ public class AdServiceTest {
     void testDuplicateTaxCode() {
         String taxCode = "TAX-DUP";
         adService.createCompany(new AdCompanyRequest("Co 1", taxCode, "info"));
-        
-        assertThrows(RuntimeException.class, () -> {
+
+        AppException exception = assertThrows(AppException.class, () -> {
             adService.createCompany(new AdCompanyRequest("Co 2", taxCode, "info"));
         });
+        assertEquals(ErrorCode.AD_COMPANY_ALREADY_EXISTS, exception.getErrorCode());
     }
 
     @Test
@@ -137,14 +139,15 @@ public class AdServiceTest {
 
         // 2. Assign first time - Success
         adService.assignAdToBus(new AdAssignmentRequest(contractRes.id(), busId));
-        
+
         // Verify bus is advertised
         Bus bus = busRepository.findById(busId).orElseThrow();
         assertTrue(bus.getIsAdvertised());
 
         // 3. Assign second time to the same bus - Should throw Exception
-        assertThrows(RuntimeException.class, () -> {
+        AppException exception = assertThrows(AppException.class, () -> {
             adService.assignAdToBus(new AdAssignmentRequest(contractRes.id(), busId));
-        }, "Xe này đã được dán quảng cáo, không thể phân bổ thêm.");
+        });
+        assertEquals(ErrorCode.BUS_ALREADY_ADVERTISED, exception.getErrorCode());
     }
 }
