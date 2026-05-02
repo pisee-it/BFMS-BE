@@ -1,4 +1,4 @@
-package com.bfms.service.impl;
+package com.bfms.bfms_backend.service.impl;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +15,6 @@ import com.bfms.bfms_backend.entity.Route;
 import com.bfms.bfms_backend.entity.BusShift;
 import com.bfms.bfms_backend.entity.ShiftStatus;
 import com.bfms.bfms_backend.repository.BusShiftRepository;
-import com.bfms.bfms_backend.service.impl.BusShiftServiceImpl;
 import com.bfms.bfms_backend.mapper.BusShiftMapper;
 import com.bfms.bfms_backend.repository.projection.BusShiftProjection;
 import com.bfms.bfms_backend.util.EntityLookupHelper;

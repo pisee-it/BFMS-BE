@@ -1,4 +1,4 @@
-package com.bfms.service.impl;
+package com.bfms.bfms_backend.service.impl;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,9 +11,9 @@ import com.bfms.bfms_backend.dtos.res.RouteResponse;
 import com.bfms.bfms_backend.entity.Route;
 import com.bfms.bfms_backend.mapper.RouteMapper;
 import com.bfms.bfms_backend.repository.RouteRepository;
-import com.bfms.bfms_backend.service.impl.RouteServiceImpl;
 import com.bfms.bfms_backend.util.EntityLookupHelper;
 import com.bfms.bfms_backend.exception.AppException;
+import com.bfms.bfms_backend.service.AuditService;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
@@ -33,6 +33,9 @@ class RouteServiceImplTest {
 
     @Mock
     private EntityLookupHelper lookupHelper;
+
+    @Mock
+    private AuditService auditService;
 
     @InjectMocks
     private RouteServiceImpl routeService;
