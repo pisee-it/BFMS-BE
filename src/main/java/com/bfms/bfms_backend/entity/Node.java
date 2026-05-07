@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.time.LocalDate;
+import java.util.List;
+
 
 @Entity
 @Table(name = "node")
@@ -33,4 +35,8 @@ public class Node {
     // 3. Derived field: Tổng hành khách (do Service layer tính toán)
     @Column(name = "total_passengers")
     private Integer totalPassengers = 0;
+
+    @OneToMany(mappedBy = "node", fetch = FetchType.LAZY)
+    private List<BusShift> shifts;
 }
+
