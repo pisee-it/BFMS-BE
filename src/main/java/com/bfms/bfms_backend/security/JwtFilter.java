@@ -38,7 +38,14 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         jwt = authHeader.substring(7);
-        username = jwtUtil.extractUsername(jwt);
+        try {
+            username = jwtUtil.extractUsername(jwt);
+        } catch (Exception e) {
+            // Nếu token lỗi (hết hạn, sai chữ ký...), chỉ đơn giản là bỏ qua và tiếp tục filter chain
+            logger.warn("JWT Verification failed: " + e.getMessage());
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // 4. Nếu có username và chưa được xác thực trong Context
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
