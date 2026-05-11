@@ -18,6 +18,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -33,11 +34,13 @@ public class ReportServiceImpl implements ReportService {
         Route route = routeRepository.findById(routeId)
                 .orElseThrow(() -> new AppException(ErrorCode.ROUTE_NOT_FOUND));
 
-        // Đảm bảo dữ liệu được đồng bộ trong khoảng thời gian yêu cầu (Tối ưu: Gọi bulk sync cho routeId cụ thể)
+        // Đảm bảo dữ liệu được đồng bộ trong khoảng thời gian yêu cầu (Tối ưu: Gọi bulk
+        // sync cho routeId cụ thể)
         economyReportService.syncEconomyReports(routeId, startDate, endDate);
 
         // Lấy dữ liệu tổng hợp từ Repository
-        Object[] result = reportRepository.getSummaryByRouteAndDateRange(routeId, startDate, endDate);
+        List<Object[]> results = reportRepository.getSummaryByRouteAndDateRange(routeId, startDate, endDate);
+        Object[] result = (results != null && !results.isEmpty()) ? results.get(0) : null;
 
         if (result == null || result.length == 0 || result[0] == null) {
             return new RouteReportResponse(
