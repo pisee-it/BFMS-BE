@@ -58,5 +58,31 @@ public class NodeServiceImpl implements NodeService {
         Node node = lookupHelper.getNode(id);
         return nodeMapper.toResponse(node);
     }
+
+    @Override
+    @Transactional
+    public NodeResponse updateNode(Integer id, NodeRequest request) {
+        Node node = lookupHelper.getNode(id);
+        
+        // Check if unique constraint would be violated
+        if (!node.getNodeNumber().equals(request.nodeNumber()) || !node.getExecutionDate().equals(request.executionDate())) {
+            if (nodeRepository.existsByRouteIdAndExecutionDateAndNodeNumber(node.getRoute().getId(), 
+                    request.executionDate(), request.nodeNumber())) {
+                throw new AppException(ErrorCode.NODE_ALREADY_EXISTS);
+            }
+        }
+
+        nodeMapper.updateEntity(node, request);
+        return nodeMapper.toResponse(nodeRepository.save(node));
+    }
+
+    @Override
+    @Transactional
+    public void deleteNode(Integer id) {
+        Node node = lookupHelper.getNode(id);
+        // Should probably check if there are shifts associated with this node?
+        // But for now just delete as requested.
+        nodeRepository.delete(node);
+    }
 }
 

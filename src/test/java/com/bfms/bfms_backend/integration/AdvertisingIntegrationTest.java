@@ -228,4 +228,30 @@ public class AdvertisingIntegrationTest {
         Bus bus = busRepository.findById(busId).orElseThrow();
         assertTrue(bus.getIsAdvertised(), "Trạng thái xe buýt is_advertised phải là true sau khi gán quảng cáo");
     }
+
+    @Test
+    void testRejectContract_Success() throws Exception {
+        // GIVEN: A pending contract
+        AdContract contract = new AdContract();
+        contract.setCompany(adCompanyRepository.findById(companyId).orElseThrow());
+        contract.setRoute(routeRepository.findById(routeId).orElseThrow());
+        contract.setStartDate(LocalDate.now());
+        contract.setEndDate(LocalDate.now().plusMonths(1));
+        contract.setPricePerBus(new BigDecimal("1000000"));
+        contract.setBusQuantity(1);
+        contract.setApprovalStatus(AdContractStatus.PENDING);
+        contract = adContractRepository.save(contract);
+
+        // WHEN: Accountant rejects it
+        mockMvc.perform(patch("/api/v1/ads/contracts/{id}/reject", contract.getId())
+                .header("Authorization", "Bearer " + accountantToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.approvalStatus").value("REJECTED"));
+
+        // THEN: Admin should get a notification
+        List<Notification> notifications = notificationRepository.findAll();
+        boolean found = notifications.stream().anyMatch(n -> n.getUser().getId().equals(adminId) &&
+                n.getMessage().contains("từ chối"));
+        assertTrue(found, "Phải có thông báo gửi cho Admin sau khi từ chối hợp đồng");
+    }
 }

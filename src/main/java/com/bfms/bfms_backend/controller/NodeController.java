@@ -37,12 +37,21 @@ public class NodeController {
         return ResponseEntity.ok(nodeService.getNodesByRoute(routeId));
     }
 
-    // 3. GET /nodes/{id} - Lấy chi tiết một nốt xe
-    @GetMapping("/nodes/{id}")
+    // 4. PUT /nodes/{id} - Cập nhật một nốt xe
+    @PutMapping("/nodes/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Lấy chi tiết nốt xe", description = "Trả về thông tin chi tiết của một nốt xe, bao gồm danh sách các ca chạy bên trong. Quyền: ADMIN")
-    public ResponseEntity<NodeResponse> getNodeById(@PathVariable Integer id) {
-        return ResponseEntity.ok(nodeService.getNodeById(id));
+    @Operation(summary = "Cập nhật nốt xe", description = "Cập nhật thông tin nốt xe. Quyền: ADMIN")
+    public ResponseEntity<NodeResponse> updateNode(@PathVariable Integer id, @Valid @RequestBody NodeRequest request) {
+        return ResponseEntity.ok(nodeService.updateNode(id, request));
+    }
+
+    // 5. DELETE /nodes/{id} - Xóa một nốt xe
+    @DeleteMapping("/nodes/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Xóa nốt xe", description = "Xóa một nốt xe khỏi hệ thống. Quyền: ADMIN")
+    public ResponseEntity<Void> deleteNode(@PathVariable Integer id) {
+        nodeService.deleteNode(id);
+        return ResponseEntity.noContent().build();
     }
 }
 

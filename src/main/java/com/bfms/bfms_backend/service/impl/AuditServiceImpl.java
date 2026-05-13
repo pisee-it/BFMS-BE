@@ -4,6 +4,8 @@ import com.bfms.bfms_backend.entity.SecurityLog;
 import com.bfms.bfms_backend.repository.SecurityLogRepository;
 import com.bfms.bfms_backend.service.AuditService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -48,5 +50,10 @@ public class AuditServiceImpl implements AuditService {
         }
 
         securityLogRepository.save(log);
+    }
+
+    @Override
+    public Page<SecurityLog> getAllLogs(String username, String action, Pageable pageable) {
+        return securityLogRepository.findByUsernameAndAction(username, action, pageable);
     }
 }

@@ -113,6 +113,23 @@ public class AdServiceImpl implements AdService {
 
     @Override
     @Transactional
+    public AdContractResponse rejectContract(Integer contractId) {
+        AdContract contract = lookupHelper.getAdContract(contractId);
+
+        contract.setApprovalStatus(AdContractStatus.REJECTED);
+        AdContract saved = adContractRepository.save(contract);
+
+        String message = String.format("Hợp đồng quảng cáo #%d (%s) đã bị từ chối bởi Kế toán.",
+                saved.getId(), saved.getCompany().getName());
+
+        notificationService.notifyAdmins(message);
+        auditService.log("REJECT_AD_CONTRACT", "Từ chối hợp đồng quảng cáo ID: " + contractId);
+
+        return adMapper.toContractResponse(saved);
+    }
+
+    @Override
+    @Transactional
     public AdAssignmentResponse assignAdToBus(AdAssignmentRequest request) {
         AdContract contract = lookupHelper.getAdContract(request.adContractId());
 

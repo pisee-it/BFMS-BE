@@ -13,5 +13,11 @@ public interface NodeService {
 
     // 3. Lấy chi tiết nốt xe
     NodeResponse getNodeById(Integer id);
+
+    // 4. Cập nhật nốt xe
+    NodeResponse updateNode(Integer id, NodeRequest request);
+
+    // 5. Xóa nốt xe
+    void deleteNode(Integer id);
 }
 

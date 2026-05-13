@@ -7,4 +7,6 @@ public interface AuditService {
      * @param description Mô tả chi tiết hành động
      */
     void log(String action, String description);
+
+    org.springframework.data.domain.Page<com.bfms.bfms_backend.entity.SecurityLog> getAllLogs(String username, String action, org.springframework.data.domain.Pageable pageable);
 }

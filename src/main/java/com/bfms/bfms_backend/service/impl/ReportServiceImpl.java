@@ -39,9 +39,9 @@ public class ReportServiceImpl implements ReportService {
         economyReportService.syncEconomyReports(routeId, startDate, endDate);
 
         // Lấy dữ liệu tổng hợp từ Repository
-        Object[] result = reportRepository.getSummaryByRouteAndDateRange(routeId, startDate, endDate);
+        List<Object[]> results = reportRepository.getSummaryByRouteAndDateRange(routeId, startDate, endDate);
 
-        if (result == null || result.length == 0 || result[0] == null) {
+        if (results == null || results.isEmpty() || results.get(0)[0] == null) {
             return new RouteReportResponse(
                     routeId,
                     route.getStopA() + " - " + route.getStopB(),
@@ -49,6 +49,8 @@ public class ReportServiceImpl implements ReportService {
                     BigDecimal.ZERO, BigDecimal.ZERO, 0, BigDecimal.ZERO, BigDecimal.ZERO,
                     startDate, endDate);
         }
+
+        Object[] result = results.get(0);
 
         // Mapping index từ Query trong ReportRepository:
         // 0: SUM(totalTicketRevenue)

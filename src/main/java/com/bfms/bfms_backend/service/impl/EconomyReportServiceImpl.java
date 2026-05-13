@@ -49,14 +49,16 @@ public class EconomyReportServiceImpl implements EconomyReportService {
         syncEconomyReports(startDate, endDate);
 
         // Lấy dữ liệu tổng hợp
-        Object[] result = reportRepository.getTotalSystemSummary(startDate, endDate);
+        List<Object[]> results = reportRepository.getTotalSystemSummary(startDate, endDate);
         
-        if (result == null || result.length == 0 || result[0] == null) {
+        if (results == null || results.isEmpty() || results.get(0)[0] == null) {
             return new RevenueResponse(
                 BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, 0,
                 timeframe, date
             );
         }
+
+        Object[] result = results.get(0);
 
         return new RevenueResponse(
             (BigDecimal) result[0],

@@ -72,6 +72,13 @@ public class AdController {
         return ResponseEntity.ok(adService.approveContract(id));
     }
 
+    @PatchMapping("/contracts/{id}/reject")
+    @PreAuthorize("hasRole('ACCOUNTANT')")
+    @Operation(summary = "Từ chối hợp đồng", description = "Kế toán từ chối yêu cầu hợp đồng quảng cáo. Quyền: ACCOUNTANT")
+    public ResponseEntity<AdContractResponse> rejectContract(@PathVariable Integer id) {
+        return ResponseEntity.ok(adService.rejectContract(id));
+    }
+
     // Yêu cầu xóa hợp đồng (Accountant yêu cầu, Owner thực thi)
     @PatchMapping("/contracts/{id}/request-delete")
     @PreAuthorize("hasRole('ACCOUNTANT')")

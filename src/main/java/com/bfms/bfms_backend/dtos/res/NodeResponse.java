@@ -21,6 +21,9 @@ public record NodeResponse(
         @Schema(description = "Tổng lượng khách dự kiến/thực tế", example = "60")
         Integer totalPassengers,
 
+        @Schema(description = "Ghi chú thêm về lượt chạy", example = "Nốt tăng cường")
+        String description,
+
         @Schema(description = "Danh sách các ca chạy trong nốt này")
         List<ShiftResponse> shifts
 ) {}

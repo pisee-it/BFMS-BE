@@ -27,9 +27,9 @@ public interface ReportRepository extends JpaRepository<EconomyReport, Integer> 
            "FROM EconomyReport er " +
            "WHERE er.route.id = :routeId " +
            "AND er.reportDate BETWEEN :startDate AND :endDate")
-    Object[] getSummaryByRouteAndDateRange(@Param("routeId") Integer routeId, 
-                                          @Param("startDate") LocalDate startDate, 
-                                          @Param("endDate") LocalDate endDate);
+    List<Object[]> getSummaryByRouteAndDateRange(@Param("routeId") Integer routeId, 
+                                                @Param("startDate") LocalDate startDate, 
+                                                @Param("endDate") LocalDate endDate);
 
     /**
      * Tổng hợp toàn bộ hệ thống trong một khoảng thời gian.
@@ -38,8 +38,8 @@ public interface ReportRepository extends JpaRepository<EconomyReport, Integer> 
     @Query("SELECT SUM(er.totalTicketRevenue), SUM(er.totalAdRevenue), SUM(er.taxDeduction), SUM(er.netProfit), SUM(er.totalPassengers) " +
            "FROM EconomyReport er " +
            "WHERE er.reportDate BETWEEN :startDate AND :endDate")
-    Object[] getTotalSystemSummary(@Param("startDate") LocalDate startDate, 
-                                   @Param("endDate") LocalDate endDate);
+    List<Object[]> getTotalSystemSummary(@Param("startDate") LocalDate startDate, 
+                                         @Param("endDate") LocalDate endDate);
 
     List<EconomyReport> findAllByReportDateBetween(LocalDate startDate, LocalDate endDate);
 

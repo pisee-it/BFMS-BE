@@ -15,6 +15,8 @@ public interface AdService {
     AdContractResponse createContract(AdContractRequest request);
 
     AdContractResponse approveContract(Integer contractId);
+    
+    AdContractResponse rejectContract(Integer contractId);
 
     AdAssignmentResponse assignAdToBus(AdAssignmentRequest request);
 

@@ -44,7 +44,10 @@ public enum ErrorCode {
     INVALID_SHIFT_DATE("SHIFT_002", "Ngày thực hiện ca chạy không khớp với lịch trình", HttpStatus.BAD_REQUEST),
     SHIFT_TIME_OUT_OF_ROUTE_RANGE("SHIFT_003", "Giờ ca chạy nằm ngoài khung giờ hoạt động của tuyến",
             HttpStatus.BAD_REQUEST),
-    NODE_ALREADY_EXISTS("NODE_001", "Nốt xe này đã tồn tại cho tuyến và ngày này", HttpStatus.BAD_REQUEST);
+    NODE_ALREADY_EXISTS("NODE_001", "Nốt xe này đã tồn tại cho tuyến và ngày này", HttpStatus.BAD_REQUEST),
+
+    // 7. Chi phí (Costs)
+    COST_NOT_FOUND("COST_404", "Không tìm thấy chi phí vận hành", HttpStatus.NOT_FOUND);
 
     private final String code;
     private final String message;
