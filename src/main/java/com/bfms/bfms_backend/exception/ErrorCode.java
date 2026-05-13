@@ -24,6 +24,7 @@ public enum ErrorCode {
 
     // 4. Người dùng (User)
     USER_NOT_FOUND("USER_404", "Người dùng không tồn tại", HttpStatus.NOT_FOUND),
+    USER_ALREADY_EXISTS("USER_001", "Tên đăng nhập đã tồn tại trên hệ thống", HttpStatus.BAD_REQUEST),
     NOTIFICATION_NOT_FOUND("NOTIF_404", "Không tìm thấy thông báo", HttpStatus.NOT_FOUND),
     REFRESH_TOKEN_NOT_FOUND("AUTH_003", "Refresh token không tồn tại trong hệ thống", HttpStatus.NOT_FOUND),
     REFRESH_TOKEN_EXPIRED("AUTH_004", "Refresh token đã hết hạn. Vui lòng đăng nhập lại", HttpStatus.UNAUTHORIZED),
