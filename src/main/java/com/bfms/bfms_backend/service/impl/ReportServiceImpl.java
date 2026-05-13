@@ -39,8 +39,7 @@ public class ReportServiceImpl implements ReportService {
         economyReportService.syncEconomyReports(routeId, startDate, endDate);
 
         // Lấy dữ liệu tổng hợp từ Repository
-        List<Object[]> results = reportRepository.getSummaryByRouteAndDateRange(routeId, startDate, endDate);
-        Object[] result = (results != null && !results.isEmpty()) ? results.get(0) : null;
+        Object[] result = reportRepository.getSummaryByRouteAndDateRange(routeId, startDate, endDate);
 
         if (result == null || result.length == 0 || result[0] == null) {
             return new RouteReportResponse(
